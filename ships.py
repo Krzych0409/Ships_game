@@ -31,46 +31,54 @@ class Player():
             pass
 
         elif self.name == 'Computer':
+            self.counter_v = 0
+            self.counter_h = 0
             for length in self.length_of_ships:
                 while True:
                     sleep(0.01)
-                    self.direction = 0  # vertical
+                    self.direction = randint(0, 1)  # vertical
                     self.row = randint(0, 9)
+                    print(f'Row: {self.row}')
                     self.column = randint(0, 9)
+                    print(f'Column: {self.column}')
                     self.filds_of_ship = [[], []]
 
                     if self.directions[self.direction] == 'vertical':
-                        if self.column + length <= 9:
+                        if self.row + length <= 9:
                             for fild in range(length):
-                                if self.sheet[self.column + fild][self.row] == puste:
-                                    self.filds_of_ship[0].append(self.column + fild)
+                                if self.sheet[self.row + fild][self.column] == puste:
+                                    self.filds_of_ship[0].append(self.row + fild)
                                     print(f'Dodano kolumne statku: {self.filds_of_ship[0][-1]}')
-                                    self.filds_of_ship[1].append(self.row)
+                                    self.filds_of_ship[1].append(self.column)
                                     print(f'Dodano wiersz statku: {self.filds_of_ship[1][-1]}')
 
-                                elif self.sheet[self.column + fild][self.row] != puste:
+                                elif self.sheet[self.row + fild][self.column] != puste:
                                     print('Pole zajęte')
                                     break
 
 
-                        elif self.column + length > 9:
+                        elif self.row + length > 9:
                             continue
 
                         print(self.filds_of_ship)
-                        if len(self.filds_of_ship[0]) == length and self.check_space() == True: break
+
+                        if len(self.filds_of_ship[0]) == length and self.check_space() == True:
+                            self.counter_v += 1
+                            break
                         else: continue
 
 
                     elif self.directions[self.direction] == 'horizontal':
+                        self.filds_of_ship = self.filds_of_ship[::-1]
                         if self.column + length <= 9:
                             for fild in range(length):
-                                if self.sheet[self.column + fild][self.row] == puste:
-                                    self.filds_of_ship[0].append(self.column + fild)
+                                if self.sheet[self.row][self.column + fild] == puste:
+                                    self.filds_of_ship[0].append(self.row)
                                     print(f'Dodano kolumne statku: {self.filds_of_ship[0][-1]}')
-                                    self.filds_of_ship[1].append(self.row)
+                                    self.filds_of_ship[1].append(self.column + fild)
                                     print(f'Dodano wiersz statku: {self.filds_of_ship[1][-1]}')
 
-                                elif self.sheet[self.column + fild][self.row] != puste:
+                                elif self.sheet[self.row][self.column + fild] != puste:
                                     print('Pole zajęte')
                                     break
 
@@ -79,18 +87,18 @@ class Player():
                             continue
 
                         print(self.filds_of_ship)
+
                         if len(self.filds_of_ship[0]) == length and self.check_space() == True:
+                            self.counter_h += 1
                             break
                         else:
                             continue
 
 
-
-
-
                 for i in range(len(self.filds_of_ship[0])):
                     self.sheet[self.filds_of_ship[0][i]][self.filds_of_ship[1][i]] = len(self.filds_of_ship[0])
                 self.show_sheet()
+
         print()
         for row in self.sheet:
             for char in row:
@@ -98,6 +106,8 @@ class Player():
                     char = puste
                 print(char, end='\t')
             print()
+        print(f'Ilość Vertical: {self.counter_v}')
+        print(f'Ilość Horizontal: {self.counter_h}')
 
 
     def check_space(self):
@@ -137,11 +147,6 @@ class Player():
 
         return True
 
-
-'''if -1 not in self.space_of_fields[0] and 10 not in self.space_of_fields[1]:
-    break
-else:
-    return False'''
 
 
 
