@@ -17,7 +17,7 @@ class Game():
         self.comp = Player('Bot', 'c', 'bot')
         self.comp.make_sheet()
         self.comp.show_sheet()
-
+        print('\n' * 50)
 
     def loop_game(self):
         while self.end_game == False:
@@ -31,27 +31,24 @@ class Game():
                     self.sum_length = 0
                     for ship in self.comp.ships:                # If human destroyed all ships
                         self.sum_length += ship.actual_length
-                    print(f"Sum of length all opponent's ships = {self.sum_length}")
+                    #print(f"Sum of length all opponent's ships = {self.sum_length}")
                     if self.sum_length == 0:
-                        print(f'Human Win  -  {self.human.name}')
+                        print(f'{self.human.name} Win !!!')
                         self.end_game = True
 
 
             while self.end_game == False:
                 print(f'\nSHOT {self.comp.name}')
                 if self.comp.shot(self.human) == False:         # If comp not hit
-                    self.comp.show_2_sheets(self.human)
                     break
                 else:                                           # If comp hit
-                    self.comp.show_2_sheets(self.human)
                     self.sum_length = 0
                     for ship in self.human.ships:
                         self.sum_length += ship.actual_length     # If comp destroyed all ships
                     #print(f"Sum of length all opponent's ships = {self.sum_length}")
                     if self.sum_length == 0:
-                        print(f'Comp Win  -  {self.comp.name}')
+                        print(f'{self.comp.name} Win !!!')
                         self.end_game = True
-
 
     def turn_of_human(self):
         pass
@@ -115,7 +112,7 @@ class Player():
                 elif opponent.sheet[r][k] == hit:
                     print(f'{Fore.RED}{opponent.sheet[r][k]}', end='\t')
                 elif type(opponent.sheet[r][k]) == int:
-                    print(f'{Fore.BLUE}{opponent.sheet[r][k]}', end='\t')
+                    print(f'{entry}', end='\t')
                 elif opponent.sheet[r][k] == fail:
                     print(f'{Fore.MAGENTA}{opponent.sheet[r][k]}', end='\t')
                 elif opponent.sheet[r][k] == entry:
@@ -379,7 +376,7 @@ class Player():
 
 
         elif self.kind_of_shot == 'bot':
-            self.field_of_shot = self.random_cord_of_shot()
+            self.field_of_shot = self.random_cord_of_shot(opponent)
             print(f'Computer answer shot: {self.field_of_shot}')
 
         if opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]] == entry:           # Pudło
@@ -396,8 +393,8 @@ class Player():
                         ship.actual_length -= 1
                         ship.actual_fields[0].remove(self.field_of_shot[0])
                         ship.actual_fields[1].remove(self.field_of_shot[1])
-                        print(f'opponent.ships.actual_fields = {ship.actual_fields}')
-                        print(f'opponent.ships.length_of_ship: {ship.actual_length}')
+                        #print(f'opponent.ships.actual_fields = {ship.actual_fields}')
+                        #print(f'opponent.ships.length_of_ship: {ship.actual_length}')
                         if ship.actual_length == 0:     # Zatopiony
                             print(f'{self.name} destroyed  --> {ship.fields}')
                             self.if_ship_destroyed(opponent, ship)
@@ -407,11 +404,22 @@ class Player():
             print(f"Choose another field - you've already shot here")
             return True
 
-    def random_cord_of_shot(self):  # Return List [Y, X]
+    def random_cord_of_shot(self, opponent):  # Return List [Y, X]
         self.shot_row = randint(0, 9)
         self.shot_kolumn = randint(0, 9)
 
-        return [self.shot_kolumn, self.shot_row]
+        if type(opponent.sheet[self.shot_row][self.shot_kolumn]) == int or opponent.sheet[self.shot_row][self.shot_kolumn] == entry:
+            return [self.shot_row, self.shot_kolumn]
+
+        else:
+            #print(f'Już było {[self.shot_row, self.shot_kolumn]}')
+            #print(f'Wybieram jeszcze raz dla {self.name}')
+            return  self.random_cord_of_shot(opponent)
+
+    def shooting_algorithm_1(self):
+        self.counter_shots = 0
+
+
 
     def if_ship_destroyed(self, opponent, ship):
         if len(ship.actual_fields[0]) == 0 and len(ship.actual_fields[1]) == 0: # dodatkowe sprawdzenie czy aktualne pola są puste
