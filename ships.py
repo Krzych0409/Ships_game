@@ -1,16 +1,18 @@
 from random import choice, randint
 from time import sleep
 from pyinputplus import inputStr, inputInt, inputChoice
-
+from colorama import Fore, init
+from time import sleep
 
 class Game():
     def __init__(self):
+        init(autoreset=True)              # auto reset color
         self.end_game = False
-        self.comp = Player('Computer', 'c')
+        self.comp = Player('Bot', 'c', 'bot')
         self.comp.make_sheet()
         self.comp.show_sheet()
         print()
-        self.human = Player('Player', 'c')
+        self.human = Player('Human', 'c', 'bot')
         self.human.make_sheet()
         self.human.show_sheet()
 
@@ -19,27 +21,32 @@ class Game():
             while self.end_game == False:
                 print(f'\nSHOT {self.human.name}')
                 if self.human.shot(self.comp) == False:         # If human not hit
+                    self.comp.show_sheet()
                     break
-                else:
+                else:                                           # If human hit
+                    self.comp.show_sheet()
                     self.sum_length = 0
                     for ship in self.comp.ships:                # If human destroyed all ships
                         self.sum_length += ship.actual_length
+                    print(f"Sum of length all opponent's ships = {self.sum_length}")
                     if self.sum_length == 0:
-                        print(f'Human Win  -  {self.human.make_sheet()}')
+                        print(f'Human Win  -  {self.human.name}')
                         self.end_game = True
 
             while self.end_game == False:
                 print(f'\nSHOT {self.comp.name}')
                 if self.comp.shot(self.human) == False:         # If comp not hit
+                    self.human.show_sheet()
                     break
-                else:
+                else:                                           # If comp hit
+                    self.human.show_sheet()
                     self.sum_length = 0
                     for ship in self.human.ships:
                         self.sum_length += ship.actual_length     # If comp destroyed all ships
+                    print(f"Sum of length all opponent's ships = {self.sum_length}")
                     if self.sum_length == 0:
-                        print(f'Comp Win  -  {self.comp.make_sheet()}')
+                        print(f'Comp Win  -  {self.comp.name}')
                         self.end_game = True
-
 
     def turn_of_human(self):
         pass
@@ -49,34 +56,43 @@ class Game():
 
 
 class Player():
-    def __init__(self, name, id_name):
-        self.id_name = id_name
+    def __init__(self, name, kind_of_make_sheet, kind_of_shot):
         self.name = name
+        self.kind_of_make_sheet = kind_of_make_sheet
+        self.kind_of_shot = kind_of_shot
         self.directions = ('vertical', 'horizontal')
         self.sheet = [[entry for x in range(10)] for x in range(10)]
         self.length_of_ships = (4, 3, 3, 2, 2, 2, 1, 1, 1, 1)
-        self.first_row = [x for x in range(-2, 10)]
-        #self.first_row[0] = ''
+        self.first_row = [x for x in range(-1, 10)]
+        self.first_row[0] = ''
         self.alphabet = ('A-0', 'B-1', 'C-2', 'D-3', 'E-4', 'F-5', 'G-6', 'H-7', 'I-8', 'J-9')
         self.ships = []
 
     def show_sheet(self):
         print(self.name)
         for char in self.first_row:
-            print(char, end='\t')
+            print(f'{Fore.YELLOW}{char}', end='\t')
         print()
 
         for i, row in enumerate(self.sheet):
-            print(self.alphabet[i], end='\t\t')
+            print(f'{Fore.YELLOW}{self.alphabet[i]}', end='\t')
             for char in row:
-                '''if type(char) == int:
-                    char = entry'''
-                print(char, end='\t')
+                if char == destroyed:
+                    print(f'{Fore.GREEN}{char}', end='\t')
+                elif char == hit:
+                    print(f'{Fore.RED}{char}', end='\t')
+                elif type(char) == int:
+                    print(f'{Fore.BLUE}{char}', end='\t')
+                elif char == fail:
+                    print(f'{Fore.MAGENTA}{char}', end='\t')
+                elif char == entry:
+                    print(f'{char}', end='\t')
+                else:
+                    print(char, end='\t')
             print()
 
-
     def make_sheet(self):
-        if self.id_name == 'p':
+        if self.kind_of_make_sheet == 'p':
             self.counter_v = 0
             self.counter_h = 0
             for length in self.length_of_ships:
@@ -156,7 +172,7 @@ class Player():
                     if self.sheet[r][c] == '#':
                         self.sheet[r][c] = entry
 
-        elif self.id_name == 'c':
+        elif self.kind_of_make_sheet == 'c':
             self.counter_v = 0
             self.counter_h = 0
             for length in self.length_of_ships:
@@ -225,8 +241,8 @@ class Player():
                         self.sheet[r][c] = entry
 
         #self.show_sheet()
-        print(f'Ilość Vertical: {self.counter_v}')
-        print(f'Ilość Horizontal: {self.counter_h}\n')
+        #print(f'Ilość Vertical: {self.counter_v}')
+        #print(f'Ilość Horizontal: {self.counter_h}\n')
 
     def check_space(self):
         # self.fields_of_ship = [[2, 3, 4], [3, 3, 3]]
@@ -300,7 +316,7 @@ class Player():
                     except: print('Wyjątek')
 
     def shot(self, opponent):
-        if self.name == 'Player':
+        if self.kind_of_shot == 'player':
             while True:
                 self.question = f'Give me cord of shot: '
                 self.field_of_shot = self.check_input(self.question)
@@ -308,7 +324,7 @@ class Player():
                 break
 
 
-        elif self.name == 'Computer':
+        elif self.kind_of_shot == 'bot':
             self.field_of_shot = self.random_cord_of_shot()
             print(f'Computer answer shot: {self.field_of_shot}')
 
@@ -329,14 +345,13 @@ class Player():
                         print(f'opponent.ships.actual_fields = {ship.actual_fields}')
                         print(f'opponent.ships.length_of_ship: {ship.actual_length}')
                         if ship.actual_length == 0:     # Zatopiony
-                            print(f'Destroyed {self.name} --> {ship.fields}')
+                            print(f'{self.name} destroyed  --> {ship.fields}')
                             self.if_ship_destroyed(opponent, ship)
             return True     # Is hit
 
         else:      # Trafienie w coś co już było
             print(f"Choose another field - you've already shot here")
             return True
-
 
     def random_cord_of_shot(self):  # Return List [Y, X]
         self.shot_row = randint(0, 9)
@@ -345,10 +360,10 @@ class Player():
         return [self.shot_kolumn, self.shot_row]
 
     def if_ship_destroyed(self, opponent, ship):
-        if len(ship.actual_fields[0]) == None and len(ship.actual_fields[1]) == None: # dodatkowe sprawdzenie czy aktualne pola są puste
+        if len(ship.actual_fields[0]) == 0 and len(ship.actual_fields[1]) == 0: # dodatkowe sprawdzenie czy aktualne pola są puste
+            print('Warunek spełniony do zatopienia statku')
             for i in range(len(ship.fields[0])):
                 opponent.sheet[ship.fields[0][i]][ship.fields[1][i]] = destroyed
-
 
 
 class Ship():
@@ -375,7 +390,7 @@ class Ship():
             
 
 
-entry = '()'
+entry = '-'
 hit = 'X'
 fail = 'O'
 destroyed = '#'
