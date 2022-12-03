@@ -3,28 +3,31 @@ from time import sleep
 from pyinputplus import inputStr, inputInt, inputChoice
 from colorama import Fore, init
 from time import sleep
+import copy
+
 
 class Game():
     def __init__(self):
         init(autoreset=True)              # auto reset color
         self.end_game = False
-        self.comp = Player('Bot', 'c', 'bot')
-        self.comp.make_sheet()
-        self.comp.show_sheet()
-        print()
         self.human = Player('Human', 'c', 'bot')
         self.human.make_sheet()
         self.human.show_sheet()
+        print()
+        self.comp = Player('Bot', 'c', 'bot')
+        self.comp.make_sheet()
+        self.comp.show_sheet()
+
 
     def loop_game(self):
         while self.end_game == False:
             while self.end_game == False:
                 print(f'\nSHOT {self.human.name}')
                 if self.human.shot(self.comp) == False:         # If human not hit
-                    self.comp.show_sheet()
+                    self.human.show_2_sheets(self.comp)
                     break
                 else:                                           # If human hit
-                    self.comp.show_sheet()
+                    self.human.show_2_sheets(self.comp)
                     self.sum_length = 0
                     for ship in self.comp.ships:                # If human destroyed all ships
                         self.sum_length += ship.actual_length
@@ -33,20 +36,22 @@ class Game():
                         print(f'Human Win  -  {self.human.name}')
                         self.end_game = True
 
+
             while self.end_game == False:
                 print(f'\nSHOT {self.comp.name}')
                 if self.comp.shot(self.human) == False:         # If comp not hit
-                    self.human.show_sheet()
+                    self.comp.show_2_sheets(self.human)
                     break
                 else:                                           # If comp hit
-                    self.human.show_sheet()
+                    self.comp.show_2_sheets(self.human)
                     self.sum_length = 0
                     for ship in self.human.ships:
                         self.sum_length += ship.actual_length     # If comp destroyed all ships
-                    print(f"Sum of length all opponent's ships = {self.sum_length}")
+                    #print(f"Sum of length all opponent's ships = {self.sum_length}")
                     if self.sum_length == 0:
                         print(f'Comp Win  -  {self.comp.name}')
                         self.end_game = True
+
 
     def turn_of_human(self):
         pass
@@ -63,9 +68,13 @@ class Player():
         self.directions = ('vertical', 'horizontal')
         self.sheet = [[entry for x in range(10)] for x in range(10)]
         self.length_of_ships = (4, 3, 3, 2, 2, 2, 1, 1, 1, 1)
-        self.first_row = [x for x in range(-1, 10)]
+        self.first_row = [x for x in range(0, 12)]
         self.first_row[0] = ''
-        self.alphabet = ('A-0', 'B-1', 'C-2', 'D-3', 'E-4', 'F-5', 'G-6', 'H-7', 'I-8', 'J-9')
+        self.first_row[11] = ''
+        self.last_row = [x for x in range(-1, 11)]
+        self.last_row[0] = ''
+        self.last_row[11] = ''
+        self.alphabet = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
         self.ships = []
 
     def show_sheet(self):
@@ -90,6 +99,51 @@ class Player():
                 else:
                     print(char, end='\t')
             print()
+
+    def show_2_sheets(self, opponent):
+        self.sheets_together = copy.deepcopy(opponent.sheet)
+
+        for char in self.first_row * 2:                                      # Print first row * 2  Change index COLUMN
+            print(f'{Fore.YELLOW}{char}', end='\t')
+        print()
+
+        for r in range(10):
+            print(f'{Fore.YELLOW}{self.alphabet[r]}', end='\t')
+            for k in range(10):
+                if opponent.sheet[r][k] == destroyed:
+                    print(f'{Fore.GREEN}{opponent.sheet[r][k]}', end='\t')
+                elif opponent.sheet[r][k] == hit:
+                    print(f'{Fore.RED}{opponent.sheet[r][k]}', end='\t')
+                elif type(opponent.sheet[r][k]) == int:
+                    print(f'{Fore.BLUE}{opponent.sheet[r][k]}', end='\t')
+                elif opponent.sheet[r][k] == fail:
+                    print(f'{Fore.MAGENTA}{opponent.sheet[r][k]}', end='\t')
+                elif opponent.sheet[r][k] == entry:
+                    print(f'{opponent.sheet[r][k]}', end='\t')
+                else:
+                    print(opponent.sheet[r][k], end='\t')
+
+            print(f'{Fore.YELLOW}{range(10)[r]}', end=' - ')
+            print(f'{Fore.YELLOW}{self.alphabet[r]}', end='\t')
+            for k in range(10):
+                if self.sheet[r][k] == destroyed:
+                    print(f'{Fore.GREEN}{self.sheet[r][k]}', end='\t')
+                elif self.sheet[r][k] == hit:
+                    print(f'{Fore.RED}{self.sheet[r][k]}', end='\t')
+                elif type(self.sheet[r][k]) == int:
+                    print(f'{Fore.BLUE}{self.sheet[r][k]}', end='\t')
+                elif self.sheet[r][k] == fail:
+                    print(f'{Fore.MAGENTA}{self.sheet[r][k]}', end='\t')
+                elif self.sheet[r][k] == entry:
+                    print(f'{self.sheet[r][k]}', end='\t')
+                else:
+                    print(self.sheet[r][k], end='\t')
+            print(f'{Fore.YELLOW}{range(10)[r]}', end='\t')
+            print()
+
+        for char in self.last_row * 2:  # Print first row * 2
+            print(f'{Fore.YELLOW}{char}', end='\t')
+        print()
 
     def make_sheet(self):
         if self.kind_of_make_sheet == 'p':
