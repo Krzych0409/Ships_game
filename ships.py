@@ -1,10 +1,45 @@
 from random import choice, randint
 from time import sleep
-from pyinputplus import inputStr, inputInt
+from pyinputplus import inputStr, inputInt, inputChoice
+
 
 class Game():
     def __init__(self):
-        pass
+        self.end_game = False
+        self.comp = Player('Computer', 'c')
+        self.comp.make_sheet()
+        self.comp.show_sheet()
+        print()
+        self.human = Player('Player', 'c')
+        self.human.make_sheet()
+        self.human.show_sheet()
+
+    def loop_game(self):
+        while self.end_game == False:
+            while self.end_game == False:
+                print(f'\nSHOT {self.human.name}')
+                if self.human.shot(self.comp) == False:         # If human not hit
+                    break
+                else:
+                    self.sum_length = 0
+                    for ship in self.comp.ships:                # If human destroyed all ships
+                        self.sum_length += ship.actual_length
+                    if self.sum_length == 0:
+                        print(f'Human Win  -  {self.human.make_sheet()}')
+                        self.end_game = True
+
+            while self.end_game == False:
+                print(f'\nSHOT {self.comp.name}')
+                if self.comp.shot(self.human) == False:         # If comp not hit
+                    break
+                else:
+                    self.sum_length = 0
+                    for ship in self.human.ships:
+                        self.sum_length += ship.actual_length     # If comp destroyed all ships
+                    if self.sum_length == 0:
+                        print(f'Comp Win  -  {self.comp.make_sheet()}')
+                        self.end_game = True
+
 
     def turn_of_human(self):
         pass
@@ -12,35 +47,116 @@ class Game():
     def turn_of_comp(self):
         pass
 
+
 class Player():
-    def __init__(self, name):
+    def __init__(self, name, id_name):
+        self.id_name = id_name
         self.name = name
         self.directions = ('vertical', 'horizontal')
         self.sheet = [[entry for x in range(10)] for x in range(10)]
-        self.length_of_ships = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+        self.length_of_ships = (4, 3, 3, 2, 2, 2, 1, 1, 1, 1)
+        self.first_row = [x for x in range(-2, 10)]
+        #self.first_row[0] = ''
+        self.alphabet = ('A-0', 'B-1', 'C-2', 'D-3', 'E-4', 'F-5', 'G-6', 'H-7', 'I-8', 'J-9')
+        self.ships = []
 
     def show_sheet(self):
-        for row in self.sheet:
+        print(self.name)
+        for char in self.first_row:
+            print(char, end='\t')
+        print()
+
+        for i, row in enumerate(self.sheet):
+            print(self.alphabet[i], end='\t\t')
             for char in row:
+                '''if type(char) == int:
+                    char = entry'''
                 print(char, end='\t')
             print()
 
+
     def make_sheet(self):
-        if self.name == 'Player':
-            for ship in self.length_of_ships:
-                print(self.name)
-                self.show_sheet()
+        if self.id_name == 'p':
+            self.counter_v = 0
+            self.counter_h = 0
+            for length in self.length_of_ships:
                 while True:
-                    self.answer = input(f'Front {ship} e.g. "5C" : ').upper()
-                    self.first_field = self.check_input(self.answer)
-                    if self.first_field:
-                        print(f'Start field ship: {self.first_field}')
+                    self.question = f'First field of ship {length} e.g. "5C" : '
+                    self.first_field = self.check_input(self.question)
+
+                    self.row = self.first_field[0]
+                    self.column = self.first_field[1]
+                    print(f'Row: {self.row}   Kolumn: {self.column}')
+                    self.fields_of_ship = [[], []]
+                    self.direction = inputChoice(['v', 'h'], prompt='vertical or horizontal [v, h]: ')
+
+                    if self.direction == 'v': self.direction = 0
+                    elif self.direction == 'h': self.direction = 1
+                    print(f'Direction : {self.direction}')
+
+                    if self.directions[self.direction] == 'vertical':
+                        if self.row + length - 1 <= 9:
+                            for field in range(length):
+                                if self.sheet[self.row + field][self.column] == entry:
+                                    self.fields_of_ship[0].append(self.row + field)
+                                    # print(f'Dodano kolumne statku: {self.fields_of_ship[0][-1]}')
+                                    self.fields_of_ship[1].append(self.column)
+                                    # print(f'Dodano wiersz statku: {self.fields_of_ship[1][-1]}')
+
+                                elif self.sheet[self.row + field][self.column] != entry:
+                                    print('Pole zajęte')
+                                    break
+
+                        elif self.row + length - 1 > 9:
+                            print('to big row')
+                            continue
+
+                        # print(self.fields_of_ship)
+                        if len(self.fields_of_ship[0]) == length and self.check_space() == True:
+                            if length > 1:
+                                self.counter_v += 1
+                            break
+                        else:
+                            continue
+
+                    elif self.directions[self.direction] == 'horizontal':
+                        self.fields_of_ship = self.fields_of_ship[::-1]
+                        if self.column + length - 1 <= 9:
+                            for field in range(length):
+                                if self.sheet[self.row][self.column + field] == entry:
+                                    self.fields_of_ship[0].append(self.row)
+                                    #print(f'Dodano kolumne statku: {self.fields_of_ship[0][-1]}')
+                                    self.fields_of_ship[1].append(self.column + field)
+                                    #print(f'Dodano wiersz statku: {self.fields_of_ship[1][-1]}')
+
+                                elif self.sheet[self.row][self.column + field] != entry:
+                                    print('Pole zajęte')
+                                    break
+
+                        elif self.column + length - 1 > 9:
+                            print('to big kolumn')
+                            continue
+
+                    #print(self.fields_of_ship)
+                    if len(self.fields_of_ship[0]) == length and self.check_space() == True:
+                        if length > 1:
+                            self.counter_h += 1
                         break
+                    else: continue
 
 
+                # Add ship on sheet
+                for i in range(len(self.fields_of_ship[0])):
+                    self.sheet[self.fields_of_ship[0][i]][self.fields_of_ship[1][i]] = len(self.fields_of_ship[0])
+                self.ships.append(Ship(self.fields_of_ship))
 
+            # Change '#' to entry
+            for r in range(len(self.sheet[0])):
+                for c in range(len(self.sheet[r])):
+                    if self.sheet[r][c] == '#':
+                        self.sheet[r][c] = entry
 
-        elif self.name == 'Computer':
+        elif self.id_name == 'c':
             self.counter_v = 0
             self.counter_h = 0
             for length in self.length_of_ships:
@@ -50,79 +166,79 @@ class Player():
                     #print(f'Row: {self.row}')
                     self.column = randint(0, 9)
                     #print(f'Column: {self.column}')
-                    self.filds_of_ship = [[], []]
+                    self.fields_of_ship = [[], []]
 
                     if self.directions[self.direction] == 'vertical':
-                        if self.row + length <= 9:
-                            for fild in range(length):
-                                if self.sheet[self.row + fild][self.column] == entry:
-                                    self.filds_of_ship[0].append(self.row + fild)
-                                    #print(f'Dodano kolumne statku: {self.filds_of_ship[0][-1]}')
-                                    self.filds_of_ship[1].append(self.column)
-                                    #print(f'Dodano wiersz statku: {self.filds_of_ship[1][-1]}')
+                        if self.row + length - 1 <= 9:
+                            for field in range(length):
+                                if self.sheet[self.row + field][self.column] == entry:
+                                    self.fields_of_ship[0].append(self.row + field)
+                                    #print(f'Dodano kolumne statku: {self.fields_of_ship[0][-1]}')
+                                    self.fields_of_ship[1].append(self.column)
+                                    #print(f'Dodano wiersz statku: {self.fields_of_ship[1][-1]}')
 
-                                elif self.sheet[self.row + fild][self.column] != entry:
+                                elif self.sheet[self.row + field][self.column] != entry:
                                     #print('Pole zajęte')
                                     break
 
-                        elif self.row + length > 9: continue
+                        elif self.row + length - 1 > 9: continue
 
-                        #print(self.filds_of_ship)
-                        if len(self.filds_of_ship[0]) == length and self.check_space() == True:
+                        #print(self.fields_of_ship)
+                        if len(self.fields_of_ship[0]) == length and self.check_space() == True:
                             if length > 1:
                                 self.counter_v += 1
                             break
                         else: continue
 
-
                     elif self.directions[self.direction] == 'horizontal':
-                        self.filds_of_ship = self.filds_of_ship[::-1]
-                        if self.column + length <= 9:
-                            for fild in range(length):
-                                if self.sheet[self.row][self.column + fild] == entry:
-                                    self.filds_of_ship[0].append(self.row)
-                                    #print(f'Dodano kolumne statku: {self.filds_of_ship[0][-1]}')
-                                    self.filds_of_ship[1].append(self.column + fild)
-                                    #print(f'Dodano wiersz statku: {self.filds_of_ship[1][-1]}')
+                        self.fields_of_ship = self.fields_of_ship[::-1]
+                        if self.column + length - 1 <= 9:
+                            for field in range(length):
+                                if self.sheet[self.row][self.column + field] == entry:
+                                    self.fields_of_ship[0].append(self.row)
+                                    #print(f'Dodano kolumne statku: {self.fields_of_ship[0][-1]}')
+                                    self.fields_of_ship[1].append(self.column + field)
+                                    #print(f'Dodano wiersz statku: {self.fields_of_ship[1][-1]}')
 
-                                elif self.sheet[self.row][self.column + fild] != entry:
+                                elif self.sheet[self.row][self.column + field] != entry:
                                     #print('Pole zajęte')
                                     break
 
-                        elif self.column + length > 9: continue
+                        elif self.column + length - 1 > 9: continue
 
-                        #print(self.filds_of_ship)
-                        if len(self.filds_of_ship[0]) == length and self.check_space() == True:
+                        #print(self.fields_of_ship)
+                        if len(self.fields_of_ship[0]) == length and self.check_space() == True:
                             if length > 1:
                                 self.counter_h += 1
                             break
                         else: continue
 
                 # Add ship on sheet
-                for i in range(len(self.filds_of_ship[0])):
-                    self.sheet[self.filds_of_ship[0][i]][self.filds_of_ship[1][i]] = len(self.filds_of_ship[0])
+                for i in range(len(self.fields_of_ship[0])):
+                    self.sheet[self.fields_of_ship[0][i]][self.fields_of_ship[1][i]] = len(self.fields_of_ship[0])
+                self.ships.append(Ship(self.fields_of_ship))
+                
             # Change '#' to entry
             for r in range(len(self.sheet[0])):
                 for c in range(len(self.sheet[r])):
                     if self.sheet[r][c] == '#':
                         self.sheet[r][c] = entry
 
-        print(f'\n{self.name}:')
-        self.show_sheet()
+        #self.show_sheet()
         print(f'Ilość Vertical: {self.counter_v}')
         print(f'Ilość Horizontal: {self.counter_h}\n')
 
     def check_space(self):
-        # self.filds_of_ship = [[2, 3, 4], [3, 3, 3]]
+        # self.fields_of_ship = [[2, 3, 4], [3, 3, 3]]
         self.space_of_fields = [[], []]
         # Dodanie niepowtarzających się elemetów przez zrobienie słownika
-        self.space_of_fields[0] = list(dict.fromkeys(self.filds_of_ship[0]))
-        self.space_of_fields[1] = list(dict.fromkeys(self.filds_of_ship[1]))
+        self.space_of_fields[0] = list(dict.fromkeys(self.fields_of_ship[0]))
+        self.space_of_fields[1] = list(dict.fromkeys(self.fields_of_ship[1]))
         # dodanie skrajnych indeksów
-        self.space_of_fields[0].append(self.filds_of_ship[0][0] - 1)
-        self.space_of_fields[0].append(self.filds_of_ship[0][-1] + 1)
-        self.space_of_fields[1].append(self.filds_of_ship[1][0] - 1)
-        self.space_of_fields[1].append(self.filds_of_ship[1][-1] + 1)
+        self.space_of_fields[0].append(self.fields_of_ship[0][0] - 1)
+        self.space_of_fields[0].append(self.fields_of_ship[0][-1] + 1)
+        self.space_of_fields[1].append(self.fields_of_ship[1][0] - 1)
+        self.space_of_fields[1].append(self.fields_of_ship[1][-1] + 1)
         # Usunięcie indeksów -1 i 10
         if -1 in self.space_of_fields[0]:
             self.space_of_fields[0].remove(-1)
@@ -148,38 +264,124 @@ class Player():
 
         return True
 
-    def check_input(self, answer):
-        self.letter_cord = []
-        self.digit_cord = []
-        self.change_dict = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'H': 8, 'I': 9, 'J': 10}
+    def check_input(self, question):  # Return List [Y, X]
+        self.change_dict = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9}
 
-        if len(answer) == 2 or len(answer) == 3:
-            for i in answer:
-                if i.isupper():
-                    self.letter_cord.append(i)
-                elif i.isdigit():
-                    self.digit_cord.append(i)
+        while True:
+            self.letter_cord = []
+            self.digit_cord = []
+            self.answer = input(question).upper()
+            if len(self.answer) == 2 or len(self.answer) == 3:
+                for i in self.answer:
+                    if i.isupper():
+                        self.letter_cord.append(i)
+                    elif i.isdigit():
+                        self.digit_cord.append(i)
 
-            if len(self.letter_cord) != 1: return False
-            if len(self.digit_cord) == 1: self.digit_cord = int(self.digit_cord[0])
-            elif len(self.digit_cord) == 2: self.digit_cord = int(self.digit_cord[0] + self.digit_cord[1])
-            if self.digit_cord < 1 or self.digit_cord > 10: return False
-            elif 1 <= self.digit_cord <= 10: return [self.change_dict[self.letter_cord[0]], self.digit_cord]
+                if len(self.letter_cord) != 1:
+                    #print('if len(self.letter_cord) != 1:')
+                    continue
+                if len(self.digit_cord) == 1:
+                    self.digit_cord[0] = int(self.digit_cord[0]) - 1                            # If cord of field is range (1-9)
+                elif len(self.digit_cord) == 2:
+                    self.digit_cord[0] = int(self.digit_cord[0] + self.digit_cord[1]) - 1       # If cord of field = 10
+                # od tej chwili index jest od 0
+                #print(f'self.digit_cord: {self.digit_cord[0]}')
+                #print(f'self.letter_cord (index): {self.change_dict[self.letter_cord[0]]}')
 
-        else: return False
+                if self.digit_cord[0] < 0 or self.digit_cord[0] > 9:
+                    #print('if self.digit_cord[0] < 1 or self.digit_cord[0] > 9:')
+                    continue
+                elif 0 <= self.digit_cord[0] <= 9:
+                    try:
+                        #print(f'check_input: return {self.change_dict[self.letter_cord[0]]}, {self.digit_cord[0]}')    # Add self.input
+                        return [self.change_dict[self.letter_cord[0]], self.digit_cord[0]]
+
+                    except: print('Wyjątek')
+
+    def shot(self, opponent):
+        if self.name == 'Player':
+            while True:
+                self.question = f'Give me cord of shot: '
+                self.field_of_shot = self.check_input(self.question)
+                print(f'Player answer shot: {self.field_of_shot}')
+                break
+
+
+        elif self.name == 'Computer':
+            self.field_of_shot = self.random_cord_of_shot()
+            print(f'Computer answer shot: {self.field_of_shot}')
+
+        if opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]] == entry:           # Pudło
+            opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]] = fail
+            print(f'Fail {self.name}')
+            return False  # Is entry
+
+        elif type(opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]]) == int:     # Trafiony
+            opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]] = hit
+            print(f'Hit {self.name}')
+            for ship in opponent.ships:
+                for i in range(len(ship.fields[0])):
+                    if ship.fields[0][i] == self.field_of_shot[0] and ship.fields[1][i] == self.field_of_shot[1]:       # Serch hit's ship
+                        ship.actual_length -= 1
+                        ship.actual_fields[0].remove(self.field_of_shot[0])
+                        ship.actual_fields[1].remove(self.field_of_shot[1])
+                        print(f'opponent.ships.actual_fields = {ship.actual_fields}')
+                        print(f'opponent.ships.length_of_ship: {ship.actual_length}')
+                        if ship.actual_length == 0:     # Zatopiony
+                            print(f'Destroyed {self.name} --> {ship.fields}')
+                            self.if_ship_destroyed(opponent, ship)
+            return True     # Is hit
+
+        else:      # Trafienie w coś co już było
+            print(f"Choose another field - you've already shot here")
+            return True
+
+
+    def random_cord_of_shot(self):  # Return List [Y, X]
+        self.shot_row = randint(0, 9)
+        self.shot_kolumn = randint(0, 9)
+
+        return [self.shot_kolumn, self.shot_row]
+
+    def if_ship_destroyed(self, opponent, ship):
+        if len(ship.actual_fields[0]) == None and len(ship.actual_fields[1]) == None: # dodatkowe sprawdzenie czy aktualne pola są puste
+            for i in range(len(ship.fields[0])):
+                opponent.sheet[ship.fields[0][i]][ship.fields[1][i]] = destroyed
 
 
 
-
-
-
+class Ship():
+    def __init__(self, fields_of_ship):
+        self.fields = [[], []]
+        self.actual_fields = [[], []]
+        
+        for i in range(len(fields_of_ship[0])):
+            self.fields[0].append(fields_of_ship[0][i])
+            self.fields[1].append(fields_of_ship[1][i])
+            self.actual_fields[0].append(fields_of_ship[0][i])
+            self.actual_fields[1].append(fields_of_ship[1][i])
+                        
+        self.length_of_ship = len(self.fields[0])
+        self.actual_length = self.length_of_ship
+        
+        self.front_field = [self.fields[0][0], self.fields[1][0]]
+        
+        #print(f'self.length_of_ship: {self.length_of_ship}')
+        #print(f'self.front_field: {self.front_field}')
+        #print(f'self.fields: {self.fields}')
+        
+        
+            
 
 
 entry = '()'
+hit = 'X'
+fail = 'O'
+destroyed = '#'
+
 game = Game()
-comp = Player('Computer')
-comp.make_sheet()
-human = Player('Player')
-human.make_sheet()
+game.loop_game()
+
 
 
