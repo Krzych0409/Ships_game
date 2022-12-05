@@ -118,9 +118,6 @@ class Player():
                 else:
                     self.sheet_opponent[r][k] = opponent.sheet[r][k]
 
-        for i in range(10):
-            print(self.sheet_opponent[i])
-
         return self.sheet_opponent
 
     def show_2_sheets(self, opponent):
@@ -470,19 +467,27 @@ class Player():
         for r in range(10):
             for k in range(10):
                 if self.sheet_opponent[r][k] == destroyed:            # Jeśli pole zatopione to sąsiednie zamień na 'close'
-                    if self.sheet_opponent[r + 1][k] == entry:
-                        self.sheet_opponent[r + 1][k] = close
-                    if self.sheet_opponent[r - 1][k] == entry:
-                        self.sheet_opponent[r - 1][k] = close
-                    if self.sheet_opponent[r][k + 1] == entry:
-                        self.sheet_opponent[r][k + 1] = close
-                    if self.sheet_opponent[r][k - 1] == entry:
-                        self.sheet_opponent[r][k - 1] = close
+                    if r < 9:
+                        if self.sheet_opponent[r + 1][k] == entry:
+                            self.sheet_opponent[r + 1][k] = close
+                    if r > 0:
+                        if self.sheet_opponent[r - 1][k] == entry:
+                            self.sheet_opponent[r - 1][k] = close
+                    if k < 9:
+                        if self.sheet_opponent[r][k + 1] == entry:
+                            self.sheet_opponent[r][k + 1] = close
+                    if k > 0:
+                        if self.sheet_opponent[r][k - 1] == entry:
+                            self.sheet_opponent[r][k - 1] = close
 
-                self.sheet_opponent[r + 1][k + 1] = close
-                self.sheet_opponent[r + 1][k - 1] = close
-                self.sheet_opponent[r - 1][k + 1] = close
-                self.sheet_opponent[r - 1][k - 1] = close
+                    if r < 9 and k < 9:
+                        self.sheet_opponent[r + 1][k + 1] = close
+                    if r < 9 and k > 0:
+                        self.sheet_opponent[r + 1][k - 1] = close
+                    if r > 0 and k < 9:
+                        self.sheet_opponent[r - 1][k + 1] = close
+                    if r > 0 and k > 0:
+                        self.sheet_opponent[r - 1][k - 1] = close
 
         for r in range(10):         # Szuka trafienia 'X'
             for k in range(10):
