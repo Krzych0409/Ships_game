@@ -13,47 +13,43 @@ class Game():
 
         self.name_player = input('Player: ')
         self.how_sets = inputChoice(['Y', 'N'], prompt='Do you want to set your ships manually? [Y, N]: ')
-        self.human = Player(self.name_player, self.how_sets, 'player')  # The third argument determines the method of shooting. If 'player' then the player himself chooses the shooting fields.
+        self.human = Player(self.name_player, self.how_sets, 'bot')  # The third argument determines the method of shooting. If 'player' then the player himself chooses the shooting fields.
 
         self.human.make_sheet()            # Setting up the player's ships. Automatic or manual.
         self.comp.make_sheet()            # Setting up the comp's ships. Automatic or manual.
-
 
     def loop_game(self):
         """Game Loop"""
         while self.end_game == False:
             # Human's turn
             self.human.counter_turn += 1
-            print(f"\n{self.human.name} turn = {self.human.counter_turn}")
             while self.end_game == False:
+                print(f"\n{self.human.name} turn = {self.human.counter_turn}", end='')
                 if self.human.shot(self.comp) == False:         # If the player misses
-                    self.human.show_2_sheets(self.comp)         # Show sheets. The second argument is the object: opponent
                     break
                 else:                                           # If human hit
-                    self.human.show_2_sheets(self.comp)
+                    self.human.show_2_sheets(self.comp)  # Show sheets. The second argument is the object: opponent
                     self.sum_length = 0                         # Total fields of ships yet to be hit
                     for ship in self.comp.ships:
                         self.sum_length += ship.actual_length
-                    print(f"Sum of length all opponent's ships = {self.sum_length}")
                     if self.sum_length == 0:                    # If human destroyed all ships
                         print(f'{self.human.name} Win !!!')
                         self.end_game = True                    # Player Win. End game
 
             # Bot's turn
             self.comp.counter_turn += 1
-            print(f"\n{self.comp.name} turn = {self.comp.counter_turn}")
             while self.end_game == False:
+                print(f"\n{self.comp.name} turn = {self.comp.counter_turn}", end='')
                 if self.comp.shot(self.human) == False:         # If comp not hit
                     break
                 else:                                           # If comp hit
                     self.sum_length = 0                         # Total fields of ships yet to be hit
                     for ship in self.human.ships:
                         self.sum_length += ship.actual_length
-                    print(f"Sum of length all opponent's ships = {self.sum_length}")
                     if self.sum_length == 0:                    # If comp destroyed all ships
                         print(f'{self.comp.name} Win !!!')
                         self.end_game = True                    # Bot Win. End game
-
+            self.human.show_2_sheets(self.comp)  # Show sheets. The second argument is the object: opponent
 
 
 class Player():
@@ -73,16 +69,18 @@ class Player():
         self.alphabet = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')      # Alphabetical index, A-J
         self.ships = []                                                 # List of objects: Ships
         self.counter_turn = 0                                           # Turn counter
+        self.change_dict = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9}
 
     def show_sheet(self):
+        """Displaying the sheet of a given player"""
         print(self.name)
-        for char in self.first_row:
+        for char in self.first_row:                         # Print the headline. Index for player (1-10)
             print(f'{Fore.YELLOW}{char}', end='\t')
         print()
 
         for i, row in enumerate(self.sheet):
-            print(f'{Fore.YELLOW}{self.alphabet[i]}', end='\t')
-            for char in row:
+            print(f'{Fore.YELLOW}{self.alphabet[i]}', end='\t')     # Print the left index for player (A-J)
+            for char in row:                                        # Print all char in sheet with color
                 if char == destroyed:
                     print(f'{Fore.GREEN}{char}', end='\t')
                 elif char == hit:
@@ -101,8 +99,8 @@ class Player():
         """Creating a sheet with ships"""
 
         if self.kind_of_make_sheet == 'Y':                      # If set ships manual
+            self.show_sheet()
             for length in self.length_of_ships:                 # Looping through the lengths of ships. 'Adding a ship to a sheet'
-                self.show_sheet()
                 while True:
                     self.question = f'First field of ship length = {length} e.g. "10C" : '    # Text input
                     self.first_field = self.check_input(self.question)              # Assigning coordinates the first field of the ship.
@@ -112,7 +110,8 @@ class Player():
                     print(f'Row: {self.row}   Kolumn: {self.column}')
 
                     self.fields_of_ship = [[], []]                      # A list of two lists storing the row and column indexes of all the ship's fields.
-                    self.direction = inputChoice(['v', 'h'], prompt='vertical or horizontal [v, h]: ')  # Selection of ship direction. Down(v) or right(h)
+                    if length > 1:
+                        self.direction = inputChoice(['v', 'h'], prompt='vertical or horizontal [v, h]: ')  # Selection of ship direction. Down(v) or right(h)
 
                     if self.direction == 'v':       # If down
                         self.direction = 0
@@ -160,6 +159,8 @@ class Player():
                 for i in range(len(self.fields_of_ship[0])):
                     self.sheet[self.fields_of_ship[0][i]][self.fields_of_ship[1][i]] = len(self.fields_of_ship[0])
                 self.ships.append(Ship(self.fields_of_ship))        # Created a list with object ships
+
+                self.show_sheet()
 
             # Change 'close' to 'empty'. Hide outside space of ships.
             for r in range(len(self.sheet[0])):
@@ -222,7 +223,6 @@ class Player():
         Converts the input e.g. '3F', to indexes 0-9.
         Return List [row, kolumn]
         """
-        self.change_dict = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9}
 
         while True:
             self.letter_cord = []
@@ -294,7 +294,7 @@ class Player():
         return True         # If there are no other ships in the vicinity
 
     def hide_ships_on_sheet(self, opponent):
-        """Hiding enemy ships on the sheet."""
+        """Hiding opponent ships on the sheet."""
         self.sheet_opponent = [[empty for x in range(10)] for x in range(10)]
 
         for r in range(10):
@@ -319,17 +319,19 @@ class Player():
             self.hide_ships_on_sheet(opponent)      # Show sheet and hide ships of opponent
             self.field_of_shot = self.shooting_algorithm_1(opponent.ships)      # Use shooting algorithm
 
-        print(f'{self.kind_of_shot} shot: {self.field_of_shot}')
-
+        self.display_cord = []
+        self.display_cord.append(list(self.change_dict.keys())[self.field_of_shot[0]])  # Converting the row index to the letters A-J for display
+        self.display_cord.append(self.field_of_shot[1] + 1)                             # Index kolumn + 1 (1-10)
+        print(f'\t\tSHOT: {self.display_cord[1]}{self.display_cord[0]}')
 
         if opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]] == empty:       # If field wos 'empty'
             opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]] = fail         # Now is 'fail'
-            print(f'Fail {self.name}')
+            #print(f'Fail {self.name}')
             return False                # Is not hit
 
         elif type(opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]]) == int:     # If field is 'int'
             opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]] = hit              # Now is 'hit'
-            print(f'Hit {self.name}')
+            #print(f'Hit {self.name}')
             for ship in opponent.ships:
                 for i in range(len(ship.fields[0])):                                        # Looking for a damaged ship
                     if ship.fields[0][i] == self.field_of_shot[0] and ship.fields[1][i] == self.field_of_shot[1]:       # If the ship's field is equal to the shot
@@ -338,7 +340,7 @@ class Player():
                         ship.actual_fields[1].remove(self.field_of_shot[1])         # Delete the column field
 
                         if ship.actual_length == 0:                                 # If ship is destroyed
-                            print(f'{self.name} destroyed  --> {ship.fields}')
+                            print(f'{self.name} destroyed ship: ({ship.length_of_ship})')
                             for i in range(len(ship.fields[0])):
                                 opponent.sheet[ship.fields[0][i]][ship.fields[1][i]] = destroyed  # Changing the characters on the sheet. 'hit' to 'destroyed'
 
@@ -353,14 +355,15 @@ class Player():
             return True
 
     def show_2_sheets(self, opponent):
+        """Displaying the sheets"""
         self.sheets_together = copy.deepcopy(opponent.sheet)
 
-        for char in self.first_row * 2:                                      # Print first row * 2  Change index COLUMN
+        for char in self.first_row * 2:             # Print the headline for 2 sheets. Index for player (1-10)
             print(f'{Fore.YELLOW}{char}', end='\t')
         print()
 
         for r in range(10):
-            print(f'{Fore.YELLOW}{self.alphabet[r]}', end='\t')
+            print(f'{Fore.YELLOW}{self.alphabet[r]}', end='\t')         # Print the left index for player (A-J)
             for k in range(10):
                 if opponent.sheet[r][k] == destroyed:
                     print(f'{Fore.GREEN}{opponent.sheet[r][k]}', end='\t')
@@ -376,7 +379,7 @@ class Player():
                     print(opponent.sheet[r][k], end='\t')
 
             print(f'{Fore.YELLOW}{range(10)[r]}', end=' - ')
-            print(f'{Fore.YELLOW}{self.alphabet[r]}', end='\t')
+            print(f'{Fore.YELLOW}{self.alphabet[r]}', end='\t')         # Print the left index for player (A-J)
             for k in range(10):
                 if self.sheet[r][k] == destroyed:
                     print(f'{Fore.GREEN}{self.sheet[r][k]}', end='\t')
@@ -459,7 +462,7 @@ class Player():
                     self.a_empty_fields[0].append(r)
                     self.a_empty_fields[1].append(k)
 
-        print(f'Ilość pustych pól: {len(self.a_empty_fields[0])}')
+        #print(f'Ilość pustych pól: {len(self.a_empty_fields[0])}')
 
         if len(self.a_hit_fields[0]) == 0:  # Jeśli nie ma trafienia w arkuszu
             self.a_index = randint(0, len(self.a_empty_fields[0]) - 1)
@@ -497,7 +500,7 @@ class Player():
 
             for i in range(1, 4):  # Sprawdzenie 3 pól
                 try:  # W góre
-                    if self.a_hit_fields[0][0] - i == 0: break
+                    if self.a_hit_fields[0][0] - i == -1: break
                     elif self.sheet_opponent[self.a_hit_fields[0][0] - i][self.a_hit_fields[1][0]] == empty:  # Jeśli pole jest puste dodaj do sąsiednich pól
                         self.a_neighboring_fields_vertical[0].append(self.a_hit_fields[0][0] - i)
                         self.a_neighboring_fields_vertical[1].append(self.a_hit_fields[1][0])
@@ -505,12 +508,12 @@ class Player():
                     else: break
                 except: break
 
-            print(f'Ilość wolnych pól w poziomie: {len(self.a_neighboring_fields_horizontal[0])}')
+            '''print(f'Ilość wolnych pól w poziomie: {len(self.a_neighboring_fields_horizontal[0])}')
             print(f'Ilość wolnych pól w pionie: {len(self.a_neighboring_fields_vertical[0])}')
             print(f'Ilość pól horizontal o index- : {self.a_counter_fields_minus_h}')
             print(f'Ilość pól horizontal o index+ : {self.a_counter_fields_plus_h}')
             print(f'Ilość pól vertical o index- : {self.a_counter_fields_minus_v}')
-            print(f'Ilość pól vertical o index+ : {self.a_counter_fields_plus_v}')
+            print(f'Ilość pól vertical o index+ : {self.a_counter_fields_plus_v}')'''
 
             if len(self.a_neighboring_fields_horizontal[0]) > len(self.a_neighboring_fields_vertical[0]):   # Jeśli więcej wolnych pól w poziomie
                 # Gdzie więcej wolnych pól, jeśli remis to w prawo
@@ -552,7 +555,7 @@ class Player():
         elif len(self.a_hit_fields[0]) > 1:  # Jeśli są minimum 2 trafienia
             if self.a_hit_fields[0][0] == self.a_hit_fields[0][1]:      # Statek jest w poziomie
                 self.a_row = self.a_hit_fields[0][0]                        # Wiersz przyszłego strzału jest znany
-                print(f'Będzie w poziome:  --')
+                #print(f'Będzie w poziome:  --')
                 for i in range(1, 3):  # Sprawdzenie 2 pól w poziomie
                     try:  # W prawo
                         if self.sheet_opponent[self.a_hit_fields[0][-1]][self.a_hit_fields[1][-1] + i] == empty:  # Jeśli pole jest puste dodaj do sąsiednich pól
@@ -582,7 +585,7 @@ class Player():
 
             elif self.a_hit_fields[1][0] == self.a_hit_fields[1][1]:    # Statek jest w pionie
                 self.a_kolumn = self.a_hit_fields[1][0]                     # Kolumna przyszłego strzału jest znana
-                print(f'Będzie w pionie:  |')
+                #print(f'Będzie w pionie:  |')
 
                 for i in range(1, 3):  # Sprawdzenie 2 pól w pionie
                     try:  # W dół
@@ -611,7 +614,7 @@ class Player():
 
 
         self.a_counter_shots += 1
-        print(f'self.a_row = {self.a_row}   self.a_kolumn = {self.a_kolumn}')
+        #print(f'self.a_row = {self.a_row}   self.a_kolumn = {self.a_kolumn}')
 
         return [self.a_row, self.a_kolumn]
 
