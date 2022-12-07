@@ -13,7 +13,7 @@ class Game():
 
         self.name_player = input('Player: ')
         self.how_sets = inputChoice(['Y', 'N'], prompt='Do you want to set your ships manually? [Y, N]: ')
-        self.human = Player(self.name_player, self.how_sets, 'player')  # The third argument determines the method of shooting. If 'player' then the player himself chooses the shooting fields.
+        self.human = Player(self.name_player, self.how_sets, 'bot')  # The third argument determines the method of shooting. If 'player' then the player himself chooses the shooting fields.
 
         self.human.make_sheet()            # Setting up the player's ships. Automatic or manual.
         self.comp.make_sheet()            # Setting up the comp's ships. Automatic or manual.
