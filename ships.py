@@ -13,7 +13,7 @@ class Game():
 
         self.name_player = input('Player: ')
         self.how_sets = inputChoice(['Y', 'N'], prompt='Do you want to set your ships manually? [Y, N]: ')
-        self.human = Player(self.name_player, self.how_sets, 'bot')  # The third argument determines the method of shooting. If 'player' then the player himself chooses the shooting fields.
+        self.human = Player(self.name_player, self.how_sets, 'player')  # The third argument determines the method of shooting. If 'player' then the player himself chooses the shooting fields.
 
         self.human.make_sheet()            # Setting up the player's ships. Automatic or manual.
         self.comp.make_sheet()            # Setting up the comp's ships. Automatic or manual.
@@ -295,7 +295,6 @@ class Player():
                 if self.sheet[r][k] == empty or self.sheet[r][k] == close:
                     self.sheet[r][k] = close
                 else:
-                    print('False check_space')
                     return False        # If ship is too close other ship
 
         return True         # If there are no other ships in the vicinity
@@ -318,7 +317,7 @@ class Player():
 
         if self.kind_of_shot == 'player':       # If player is shoting, get coordinates
             while True:
-                self.question = f'Give me cord of shot: '
+                self.question = f'give me cord of shot: '
                 self.field_of_shot = self.check_input(self.question)
                 break
 
@@ -346,7 +345,7 @@ class Player():
                         ship.actual_fields[1].remove(self.field_of_shot[1])         # Delete the column field
 
                         if ship.actual_length == 0:                                 # If ship is destroyed
-                            print(f'{self.name} destroyed ship: {Fore.GREEN}{destroyed * ship.length_of_ship}')
+                            print(f'{self.name} destroyed ship: {Fore.BLUE}{destroyed * ship.length_of_ship}')
                             for i in range(len(ship.fields[0])):
                                 opponent.sheet[ship.fields[0][i]][ship.fields[1][i]] = destroyed  # Changing the characters on the sheet. 'hit' to 'destroyed'
 
@@ -372,7 +371,7 @@ class Player():
             print(f'{Fore.YELLOW}{self.alphabet[r]}', end='\t')         # Print the left index for player (A-J)
             for k in range(10):
                 if opponent.sheet[r][k] == destroyed:
-                    print(f'{Fore.GREEN}{opponent.sheet[r][k]}', end='\t')
+                    print(f'{Fore.BLUE}{opponent.sheet[r][k]}', end='\t')
                 elif opponent.sheet[r][k] == hit:
                     print(f'{Fore.RED}{opponent.sheet[r][k]}', end='\t')
                 elif type(opponent.sheet[r][k]) == int and end_game == False:   # Hide opponent's ships
@@ -385,6 +384,7 @@ class Player():
                     print(f'{opponent.sheet[r][k]}', end='\t')
                 elif opponent.sheet[r][k] == close:
                     print(f'{opponent.sheet[r][k]}', end='\t')
+                    opponent.sheet[r][k] = empty
                 else:
                     print(opponent.sheet[r][k], end='\t')
 
@@ -432,7 +432,6 @@ class Player():
         """
 
         self.a_ships_opponent = ships_opponent
-        self.a_counter_shots = 0
         self.a_neighboring_fields_vertical = [[], []]
         self.a_neighboring_fields_horizontal = [[], []]
         self.a_hit_fields = [[], []]
@@ -445,7 +444,7 @@ class Player():
 
         for r in range(10):
             for k in range(10):
-                if self.sheet_opponent[r][k] == destroyed:            # Jeśli pole zatopione to sąsiednie zamień na 'close'
+                if self.sheet_opponent[r][k] == destroyed:            # If the field is hit, the adjacent field changes to 'close'
                     if r < 9:
                         if self.sheet_opponent[r + 1][k] == empty:
                             self.sheet_opponent[r + 1][k] = close
@@ -468,57 +467,54 @@ class Player():
                     if r > 0 and k > 0:
                         self.sheet_opponent[r - 1][k - 1] = close
 
-        for r in range(10):         # Szuka trafienia 'X'
+        for r in range(10):         # Searching for a hit
             for k in range(10):
-                if self.sheet_opponent[r][k] == hit:                    # If field = hit
-                    #print(f'trafienie: {self.sheet_opponent[r][k]}')
+                if self.sheet_opponent[r][k] == hit:                    # If field = hit, add field to hit list
                     self.a_hit_fields[0].append(r)
                     self.a_hit_fields[1].append(k)
-                elif self.sheet_opponent[r][k] == empty:                # If field = empty
-                    #print(f'puste: {self.sheet_opponent[r][k]}')
+                elif self.sheet_opponent[r][k] == empty:                # If field = empty, add field to empty list
                     self.a_empty_fields[0].append(r)
                     self.a_empty_fields[1].append(k)
 
-        #print(f'Ilość pustych pól: {len(self.a_empty_fields[0])}')
 
-        if len(self.a_hit_fields[0]) == 0:  # Jeśli nie ma trafienia w arkuszu
+        if len(self.a_hit_fields[0]) == 0:                              # If there is no hit in the sheet
             self.a_index = randint(0, len(self.a_empty_fields[0]) - 1)
             self.a_row = self.a_empty_fields[0][self.a_index]
             self.a_kolumn = self.a_empty_fields[1][self.a_index]
 
-        elif len(self.a_hit_fields[0]) == 1:  # Jeśli jest jedno trafienie trzeba sprawdzić ilość wolnych pól w dwóch kierunkach
-            for i in range(1, 4):  # Sprawdzenie 3 pól
-                try:  # W prawo
-                    if self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] + i] == empty:  # Jeśli pole jest puste dodaj do sąsiednich pól
+        elif len(self.a_hit_fields[0]) == 1:    # If there is one hit you need to check the number of free fields in two directions
+            for i in range(1, 4):  # Check 3 fields
+                try:  # Right
+                    if self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] + i] == empty:  # If the field is empty add to the adjacent fields
                         self.a_neighboring_fields_horizontal[0].append(self.a_hit_fields[0][0])
                         self.a_neighboring_fields_horizontal[1].append(self.a_hit_fields[1][0] + i)
                         self.a_counter_fields_plus_h += 1
                     else: break
                 except: break
 
-            for i in range(1, 4):  # Sprawdzenie 3 pól
-                try:  # W lewo
+            for i in range(1, 4):  # Check 3 fields
+                try:  # Left
                     if self.a_hit_fields[1][0] - i == -1: break
-                    elif self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] - i] == empty:  # Jeśli pole jest puste dodaj do sąsiednich pól
+                    elif self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] - i] == empty:  # If the field is empty add to the adjacent fields
                         self.a_neighboring_fields_horizontal[0].append(self.a_hit_fields[0][0])
                         self.a_neighboring_fields_horizontal[1].append(self.a_hit_fields[1][0] - i)
                         self.a_counter_fields_minus_h += 1
                     else: break
                 except: break
 
-            for i in range(1, 4):  # Sprawdzenie 3 pól
-                try:  # W dół
-                    if self.sheet_opponent[self.a_hit_fields[0][0] + i][self.a_hit_fields[1][0]] == empty:  # Jeśli pole jest puste dodaj do sąsiednich pól
+            for i in range(1, 4):  # Check 3 fields
+                try:  # Down
+                    if self.sheet_opponent[self.a_hit_fields[0][0] + i][self.a_hit_fields[1][0]] == empty:  # If the field is empty add to the adjacent fields
                         self.a_neighboring_fields_vertical[0].append(self.a_hit_fields[0][0] + i)
                         self.a_neighboring_fields_vertical[1].append(self.a_hit_fields[1][0])
                         self.a_counter_fields_plus_v += 1
                     else: break
                 except: break
 
-            for i in range(1, 4):  # Sprawdzenie 3 pól
-                try:  # W góre
+            for i in range(1, 4):  # Check 3 fields
+                try:  # Up
                     if self.a_hit_fields[0][0] - i == -1: break
-                    elif self.sheet_opponent[self.a_hit_fields[0][0] - i][self.a_hit_fields[1][0]] == empty:  # Jeśli pole jest puste dodaj do sąsiednich pól
+                    elif self.sheet_opponent[self.a_hit_fields[0][0] - i][self.a_hit_fields[1][0]] == empty:  # If the field is empty add to the adjacent fields
                         self.a_neighboring_fields_vertical[0].append(self.a_hit_fields[0][0] - i)
                         self.a_neighboring_fields_vertical[1].append(self.a_hit_fields[1][0])
                         self.a_counter_fields_minus_v += 1
@@ -532,106 +528,97 @@ class Player():
             print(f'Ilość pól vertical o index- : {self.a_counter_fields_minus_v}')
             print(f'Ilość pól vertical o index+ : {self.a_counter_fields_plus_v}')'''
 
-            if len(self.a_neighboring_fields_horizontal[0]) > len(self.a_neighboring_fields_vertical[0]):   # Jeśli więcej wolnych pól w poziomie
-                # Gdzie więcej wolnych pól, jeśli remis to w prawo
-                if self.a_counter_fields_minus_h > self.a_counter_fields_plus_h:
-                    if self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] - 1] == empty:      # Strzelamy w lewo (index -)
+            if len(self.a_neighboring_fields_horizontal[0]) > len(self.a_neighboring_fields_vertical[0]):       # If more free fields horizontally
+                if self.a_counter_fields_minus_h > self.a_counter_fields_plus_h:                                # If more free fields in left
+                    if self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] - 1] == empty:      # Shoot to the left (index -) if is 'empty'
                         self.a_row = self.a_hit_fields[0][0]
                         self.a_kolumn = self.a_hit_fields[1][0] - 1
-                    else:                                                       # Strzelamy w prawo (index +)
+                    else:                                                   # Shoot to the right (index +)
                         self.a_row = self.a_hit_fields[0][-1]
                         self.a_kolumn = self.a_hit_fields[1][-1] + 1
 
-                elif self.a_counter_fields_minus_h <= self.a_counter_fields_plus_h:                                 # Strzelamy w prawo (index +)
-                    if self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] + 1] == empty:
-                        self.a_row = self.a_hit_fields[0][0]
-                        self.a_kolumn = self.a_hit_fields[1][0] + 1
-                    else:                                                       # Strzelamy w lewo (index -)
+                elif self.a_counter_fields_minus_h <= self.a_counter_fields_plus_h:                             # If more free fields in right or =
+                    if self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] + 1] == empty:      # Shoot to the right (index +) if is 'empty'
                         self.a_row = self.a_hit_fields[0][-1]
-                        self.a_kolumn = self.a_hit_fields[1][-1] - 1
+                        self.a_kolumn = self.a_hit_fields[1][-1] + 1
+                    else:                                                   # Shoot to the left (index -)
+                        self.a_row = self.a_hit_fields[0][0]
+                        self.a_kolumn = self.a_hit_fields[1][0] - 1
 
-            elif len(self.a_neighboring_fields_horizontal[0]) <= len(self.a_neighboring_fields_vertical[0]): # Jeśli więcej wolnych pól w pionie lub remis
-                # Gdzie więcej wolnych pól, jeśli remis to w dół
-                if self.a_counter_fields_minus_v > self.a_counter_fields_plus_v:
-                    if self.sheet_opponent[self.a_hit_fields[0][0] - 1][self.a_hit_fields[1][0]] == empty:      # Strzelamy w góre (index -)
+            elif len(self.a_neighboring_fields_horizontal[0]) <= len(self.a_neighboring_fields_vertical[0]):    # If more free fields vertically or =
+                if self.a_counter_fields_minus_v > self.a_counter_fields_plus_v:                                # If more free fields in up
+                    if self.sheet_opponent[self.a_hit_fields[0][0] - 1][self.a_hit_fields[1][0]] == empty:      # # Shoot to the up (index -)
                         self.a_row = self.a_hit_fields[0][0] - 1
                         self.a_kolumn = self.a_hit_fields[1][0]
-                    else:                                               # Strzelamy w dół (index +)
+                    else:                                                   # Shoot to the down (index +)
                         self.a_row = self.a_hit_fields[0][-1] + 1
                         self.a_kolumn = self.a_hit_fields[1][-1]
 
 
-                elif self.a_counter_fields_minus_v <= self.a_counter_fields_plus_v:  # Strzelamy w dół (index +)
-                    if self.sheet_opponent[self.a_hit_fields[0][0] + 1][self.a_hit_fields[1][0]] == empty:      # Strzelamy w dół (index +)
+                elif self.a_counter_fields_minus_v <= self.a_counter_fields_plus_v:                             # If more free fields in down or =
+                    if self.sheet_opponent[self.a_hit_fields[0][0] + 1][self.a_hit_fields[1][0]] == empty:      # Shoot to the down (index +)
                         self.a_row = self.a_hit_fields[0][-1] + 1
                         self.a_kolumn = self.a_hit_fields[1][-1]
-                    else:                                               # Strzelamy w góre (index -)
+                    else:                                                   # Shoot to the up (index -)
                         self.a_row = self.a_hit_fields[0][0] - 1
                         self.a_kolumn = self.a_hit_fields[1][0]
 
-        elif len(self.a_hit_fields[0]) > 1:  # Jeśli są minimum 2 trafienia
-            if self.a_hit_fields[0][0] == self.a_hit_fields[0][1]:      # Statek jest w poziomie
-                self.a_row = self.a_hit_fields[0][0]                        # Wiersz przyszłego strzału jest znany
-                #print(f'Będzie w poziome:  --')
-                for i in range(1, 3):  # Sprawdzenie 2 pól w poziomie
-                    try:  # W prawo
-                        if self.sheet_opponent[self.a_hit_fields[0][-1]][self.a_hit_fields[1][-1] + i] == empty:  # Jeśli pole jest puste dodaj do sąsiednich pól
+        elif len(self.a_hit_fields[0]) > 1:                             # If there is minimum 2 hit you need to check the number of free fields in two directions
+            if self.a_hit_fields[0][0] == self.a_hit_fields[0][1]:          # The ship is horizontal. Index of the row is known.
+                self.a_row = self.a_hit_fields[0][0]
+                for i in range(1, 3):   # Checking 2 fields to right
+                    try:
+                        if self.sheet_opponent[self.a_hit_fields[0][-1]][self.a_hit_fields[1][-1] + i] == empty:  # If the field is empty add to the adjacent fields
                             self.a_neighboring_fields_horizontal[0].append(self.a_hit_fields[0][-1])
                             self.a_neighboring_fields_horizontal[1].append(self.a_hit_fields[1][-1] + i)
-                            self.a_counter_fields_plus_h += 1  # dodanie pola index +
+                            self.a_counter_fields_plus_h += 1           # Increase the counter of free fields to the right (index kolumn +)
                         else:
                             break
                     except: break
-                for i in range(1, 3):  # Sprawdzenie 2 pól w poziomie
-                    try:  # W lewo
+                for i in range(1, 3):  # Checking 2 fields to left
+                    try:
                         if self.a_hit_fields[1][0] == 0: break
-                        elif self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] - i] == empty:  # Jeśli pole jest puste dodaj do sąsiednich pól
+                        elif self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] - i] == empty:  # If the field is empty add to the adjacent fields
                             self.a_neighboring_fields_horizontal[0].append(self.a_hit_fields[0][0])
                             self.a_neighboring_fields_horizontal[1].append(self.a_hit_fields[1][0] - i)
-                            self.a_counter_fields_minus_h += 1  # dodanie pola index -
+                            self.a_counter_fields_minus_h += 1          # Increase the counter of free fields to the left (index kolumn -)
                         else:
                             break
                     except: break
 
-                # Gdzie więcej wolnych pól, jeśli remis to w prawo
-                if self.a_counter_fields_minus_h > self.a_counter_fields_plus_h:  # Strzelamy w lewo (index -)
+                if self.a_counter_fields_minus_h > self.a_counter_fields_plus_h:    # If more free fields to the left then we shoot to the left
                     self.a_kolumn = self.a_hit_fields[1][0] - 1
-                elif self.a_counter_fields_minus_h <= self.a_counter_fields_plus_h:  # Strzelamy w prawo (index +)
+                elif self.a_counter_fields_minus_h <= self.a_counter_fields_plus_h: # If more free fields to the right or the same amount, we shoot to the right
                     self.a_kolumn = self.a_hit_fields[1][-1] + 1
 
 
-            elif self.a_hit_fields[1][0] == self.a_hit_fields[1][1]:    # Statek jest w pionie
-                self.a_kolumn = self.a_hit_fields[1][0]                     # Kolumna przyszłego strzału jest znana
-                #print(f'Będzie w pionie:  |')
+            elif self.a_hit_fields[1][0] == self.a_hit_fields[1][1]:        # The ship is vertical. Index of the kolumn is known.
+                self.a_kolumn = self.a_hit_fields[1][0]
 
-                for i in range(1, 3):  # Sprawdzenie 2 pól w pionie
-                    try:  # W dół
-                        if self.sheet_opponent[self.a_hit_fields[0][-1] + i][self.a_hit_fields[1][-1]] == empty:  # Jeśli pole jest puste dodaj do sąsiednich pól
+                for i in range(1, 3):  # Checking 2 fields to down
+                    try:
+                        if self.sheet_opponent[self.a_hit_fields[0][-1] + i][self.a_hit_fields[1][-1]] == empty:    # If the field is empty add to the adjacent fields
                             self.a_neighboring_fields_vertical[0].append(self.a_hit_fields[0][-1] + i)
                             self.a_neighboring_fields_vertical[1].append(self.a_hit_fields[1][-1])
-                            self.a_counter_fields_plus_v += 1  # dodanie pola index +
+                            self.a_counter_fields_plus_v += 1  # Increase the counter of free fields to the down (index row +)
                         else:
                             break
                     except: break
-                for i in range(1, 3):  # Sprawdzenie 2 pól w pionie
-                    try:  # W góre
-                        if self.sheet_opponent[self.a_hit_fields[0][0] - i][self.a_hit_fields[1][0]] == empty:  # Jeśli pole jest puste dodaj do sąsiednich pól
+                for i in range(1, 3):  # Checking 2 fields to up
+                    try:
+                        if self.sheet_opponent[self.a_hit_fields[0][0] - i][self.a_hit_fields[1][0]] == empty:      # If the field is empty add to the adjacent fields
                             self.a_neighboring_fields_vertical[0].append(self.a_hit_fields[0][0] - i)
                             self.a_neighboring_fields_vertical[1].append(self.a_hit_fields[1][0])
-                            self.a_counter_fields_minus_v += 1  # dodanie pola index -
+                            self.a_counter_fields_minus_v += 1  # Increase the counter of free fields to the up (index kolumn -)
                         else:
                             break
                     except: break
 
-                # Gdzie więcej wolnych pól, jeśli remis to w dół
-                if self.a_counter_fields_minus_v > self.a_counter_fields_plus_v:  # Strzelamy w góre (index -)
+                if self.a_counter_fields_minus_v > self.a_counter_fields_plus_v:        # If more free fields to the up then we shoot to the up
                     self.a_row = self.a_hit_fields[0][0] - 1
-                elif self.a_counter_fields_minus_v <= self.a_counter_fields_plus_v:  # Strzelamy w dół (index +)
+                elif self.a_counter_fields_minus_v <= self.a_counter_fields_plus_v:     # If more free fields to the down or the same amount, we shoot to the down
                     self.a_row = self.a_hit_fields[0][-1] + 1
 
-
-        self.a_counter_shots += 1
-        #print(f'self.a_row = {self.a_row}   self.a_kolumn = {self.a_kolumn}')
 
         return [self.a_row, self.a_kolumn]
 
@@ -641,21 +628,21 @@ class Ship():
         self.fields = [[], []]
         self.actual_fields = [[], []]
         
-        for i in range(len(fields_of_ship[0])):
+        for i in range(len(fields_of_ship[0])):             # Adding coordinates to the ship object fields
             self.fields[0].append(fields_of_ship[0][i])
             self.fields[1].append(fields_of_ship[1][i])
             self.actual_fields[0].append(fields_of_ship[0][i])
             self.actual_fields[1].append(fields_of_ship[1][i])
                         
-        self.length_of_ship = len(self.fields[0])
+        self.length_of_ship = len(self.fields[0])           # Length of the ship
         self.actual_length = self.length_of_ship
         
-        self.front_field = [self.fields[0][0], self.fields[1][0]]
+        self.front_field = [self.fields[0][0], self.fields[1][0]]   # First field of the ship
 
         
         
 
-# Chars of field
+# Field marks
 
 empty = '-'
 hit = 'X'
