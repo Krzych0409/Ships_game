@@ -1,5 +1,5 @@
 from random import randint
-from pyinputplus import inputChoice
+from pyinputplus import inputChoice, inputInt, inputMenu
 from colorama import Fore, init
 import copy
 
@@ -9,23 +9,30 @@ class Game():
         init(autoreset=True)                # Auto reset color
         self.end_game = False               # If 'True" end game
 
-        self.comp = Player('Bot', 'N', 'bot')
+        self.lvl_bot = inputInt(prompt="Choose your opponent's level [1, 2]: ", min=1, max=2)
+        self.comp = Player('Bot', 'N', self.lvl_bot)
 
-        self.name_player = input('Player: ')
+        self.name_player = input('Your name: ')
         self.how_sets = inputChoice(['Y', 'N'], prompt='Do you want to set your ships manually? [Y, N]: ')
-        self.human = Player(self.name_player, self.how_sets, 'bot')  # The third argument determines the method of shooting. If 'player' then the player himself chooses the shooting fields.
 
-        self.human.make_sheet()            # Setting up the player's ships. Automatic or manual.
+        # The third argument determines the method of shooting. If 'player' then the player himself chooses the shooting fields.
+        # There are currently 3 algorithms to choose from, but the third is not yet finish.
+        self.human = Player(self.name_player, self.how_sets, 'player')
+
+        self.human.make_sheet()           # Setting up the player's ships. Automatic or manual.
         self.comp.make_sheet()            # Setting up the comp's ships. Automatic or manual.
 
     def loop_game(self):
         """Game Loop"""
+        self.turn = 1
         while self.end_game == False:
+            print(f'\nTurn: {self.turn}')
+            self.turn += 1
             # Human's turn
-            self.human.counter_turn += 1
+            #self.human.counter_turn += 1
             while self.end_game == False:
-                print()
-                print(f"Turn = {self.human.counter_turn}   {self.human.name} ", end='')
+
+                print(f"{self.human.name} ", end='')
                 if self.human.shot(self.comp) == False:         # If the player misses
                     break
                 else:                                           # If human hit
@@ -39,9 +46,9 @@ class Game():
 
             # Bot's turn
             print()
-            self.comp.counter_turn += 1
+            #self.comp.counter_turn += 1
             while self.end_game == False:
-                print(f"Turn = {self.comp.counter_turn}   {self.comp.name} ", end='')
+                print(f"{self.comp.name} ", end='')
                 if self.comp.shot(self.human) == False:         # If comp not hit
                     break
                 else:                                           # If comp hit
@@ -80,7 +87,7 @@ class Player():
 
     def show_sheet(self):
         """Displaying the sheet of a given player"""
-        print(self.name)
+        #print(self.name)
         for char in self.first_row:                         # Print the headline. Index for player (1-10)
             print(f'{Fore.YELLOW}{char}', end='\t')
         print()
@@ -109,12 +116,11 @@ class Player():
             self.show_sheet()
             for length in self.length_of_ships:                 # Looping through the lengths of ships. 'Adding a ship to a sheet'
                 while True:
-                    self.question = f'First field of ship, length of ship = {Fore.BLUE}{length}{Fore.RESET} e.g. "10C" : '    # Text input
+                    self.question = f'\nFirst field of ship, length of ship = {Fore.BLUE}{length}{Fore.RESET} e.g. "10C" : '    # Text input
                     self.first_field = self.check_input(self.question)              # Assigning coordinates the first field of the ship.
 
                     self.row = self.first_field[0]                      # Index of row
                     self.column = self.first_field[1]                   # Index of column
-                    print(f'Row: {self.row}   Kolumn: {self.column}')
 
                     self.fields_of_ship = [[], []]                      # A list of two lists storing the row and column indexes of all the ship's fields.
                     if length > 1:
@@ -124,7 +130,6 @@ class Player():
                         self.direction = 0
                     elif self.direction == 'h':     # If right
                         self.direction = 1
-                    print(f'Direction : {self.direction}')
 
                     if self.directions[self.direction] == 'vertical':           # If ship vertical
                         if self.row + length - 1 <= 9:                          # Checking that the row of the last field is not out of range.
@@ -133,27 +138,26 @@ class Player():
                                     self.fields_of_ship[0].append(self.row + field)
                                     self.fields_of_ship[1].append(self.column)
                                 elif self.sheet[self.row + field][self.column] != empty:    # If not then ask for another coordinate first field
-                                    print('A minimum of one of the fields is occupied or too close to another ship.')
+                                    print(f'{Fore.RED}A minimum of one of the fields is occupied or too close to another ship.')
                                     break
 
                         elif self.row + length - 1 > 9:                 # If row is too large. Repeat the while loop.
-                            print('Too large a row index.')
+                            print(f'{Fore.RED}Too large a row index.')
                             continue
 
 
                     elif self.directions[self.direction] == 'horizontal':       # If ship horizontal
-                        self.fields_of_ship = self.fields_of_ship[::-1]         # TODO
                         if self.column + length - 1 <= 9:                       # Checking that the column of the last field is not out of range.
                             for field in range(length):
                                 if self.sheet[self.row][self.column + field] == empty:      # If so, add the field coordinates to the list of ship fields.
                                     self.fields_of_ship[0].append(self.row)
                                     self.fields_of_ship[1].append(self.column + field)
                                 elif self.sheet[self.row][self.column + field] != empty:    # If not then ask for another coordinate first field
-                                    print('A minimum of one of the fields is occupied or too close to another ship.')
+                                    print(f'{Fore.RED}A minimum of one of the fields is occupied or too close to another ship.')
                                     break
 
                         elif self.column + length - 1 > 9:              # If column is too large. Repeat the while loop.
-                            print('Too large a column index.')
+                            print(f'{Fore.RED}Too large a column index.')
                             continue
 
                     # If the number of fields equals the length of the ship and there are no other ships nearby. Go to next ship in loop.
@@ -198,7 +202,7 @@ class Player():
                     elif self.directions[self.direction] == 'horizontal':       # If ship horizontal
                         self.fields_of_ship = self.fields_of_ship[::-1]         # TODO
                         if self.column + length - 1 <= 9:                       # Checking that the column of the last field is not out of range.
-                            for field in range(length):
+                            for field in range(length):                         # Checking that all the ship's fields are empty.
                                 if self.sheet[self.row][self.column + field] == empty:      # If so, add the field coordinates to the list of ship fields.
                                     self.fields_of_ship[0].append(self.row)
                                     self.fields_of_ship[1].append(self.column + field)
@@ -208,11 +212,11 @@ class Player():
                         elif self.column + length - 1 > 9:                              # If column is too large. Repeat the while loop.
                             continue
 
-                        # If the number of fields equals the length of the ship and there are no other ships nearby. Go to next ship in loop.
-                        if len(self.fields_of_ship[0]) == length and self.check_space() == True:
-                            break
-                        else:
-                            continue        # You can't put a ship here. Provide other coordinates. Repeat the while loop.
+                    # If the number of fields equals the length of the ship and there are no other ships nearby. Go to next ship in loop.
+                    if len(self.fields_of_ship[0]) == length and self.check_space() == True:
+                        break
+                    else:
+                        continue        # You can't put a ship here. Provide other coordinates. Repeat the while loop.
 
                 # Add ship on sheet. The length of the ship is the mark on the sheet e.g. '3 3 3'
                 for i in range(len(self.fields_of_ship[0])):
@@ -317,13 +321,21 @@ class Player():
 
         if self.kind_of_shot == 'player':       # If player is shoting, get coordinates
             while True:
-                self.question = f'give me cord of shot: '
+                self.question = f'shot: '
                 self.field_of_shot = self.check_input(self.question)
                 break
 
-        elif self.kind_of_shot == 'bot':        # If Bot is shoting, get coordinates
+        elif self.kind_of_shot == 1:        # If Bot is shoting, get coordinates (lvl = 1)
             self.hide_ships_on_sheet(opponent)      # Show sheet and hide ships of opponent
-            self.field_of_shot = self.shooting_algorithm_1(opponent.ships)      # Use shooting algorithm
+            self.field_of_shot = self.shooting_algorithm_1(opponent)      # Use shooting algorithm
+
+        elif self.kind_of_shot == 2:        # If Bot is shoting, get coordinates (lvl = 2)
+            self.hide_ships_on_sheet(opponent)      # Show sheet and hide ships of opponent
+            self.field_of_shot = self.shooting_algorithm_2(opponent.ships)      # Use shooting algorithm
+
+        elif self.kind_of_shot == 3:        # If Bot is shoting, get coordinates (lvl = 3)
+            self.hide_ships_on_sheet(opponent)      # Show sheet and hide ships of opponent
+            self.field_of_shot = self.shooting_algorithm_3(opponent.ships)      # Use shooting algorithm
 
         self.display_cord = []
         self.display_cord.append(list(self.change_dict.keys())[self.field_of_shot[0]])  # Converting the row index to the letters A-J for display
@@ -331,12 +343,12 @@ class Player():
 
         if opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]] == empty:       # If field wos 'empty'
             opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]] = fail         # Now is 'fail'
-            print(f'SHOT:  {self.display_cord[1]}{self.display_cord[0]} = {Fore.MAGENTA}O')
+            print(f'{self.display_cord[1]}{self.display_cord[0]} = {Fore.MAGENTA}O')
             return False                # Is not hit
 
         elif type(opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]]) == int:     # If field is 'int'
             opponent.sheet[self.field_of_shot[0]][self.field_of_shot[1]] = hit              # Now is 'hit'
-            print(f'SHOT:  {self.display_cord[1]}{self.display_cord[0]} = {Fore.RED}X')
+            print(f'{self.display_cord[1]}{self.display_cord[0]} = {Fore.RED}X')
             for ship in opponent.ships:
                 for i in range(len(ship.fields[0])):                                        # Looking for a damaged ship
                     if ship.fields[0][i] == self.field_of_shot[0] and ship.fields[1][i] == self.field_of_shot[1]:       # If the ship's field is equal to the shot
@@ -346,6 +358,7 @@ class Player():
 
                         if ship.actual_length == 0:                                 # If ship is destroyed
                             print(f'{self.name} destroyed ship: {Fore.BLUE}{destroyed * ship.length_of_ship}')
+                            opponent.ships.remove(ship)                             # Delete object from list of ships
                             for i in range(len(ship.fields[0])):
                                 opponent.sheet[ship.fields[0][i]][ship.fields[1][i]] = destroyed  # Changing the characters on the sheet. 'hit' to 'destroyed'
 
@@ -377,7 +390,7 @@ class Player():
                 elif type(opponent.sheet[r][k]) == int and end_game == False:   # Hide opponent's ships
                     print(f'{empty}', end='\t')
                 elif type(opponent.sheet[r][k]) == int and end_game == True:    # If end game show opponent's ships
-                    print(f'{Fore.BLUE}{opponent.sheet[r][k]}', end='\t')
+                    print(f'{Fore.GREEN}{opponent.sheet[r][k]}', end='\t')
                 elif opponent.sheet[r][k] == fail:
                     print(f'{Fore.MAGENTA}{opponent.sheet[r][k]}', end='\t')
                 elif opponent.sheet[r][k] == empty:
@@ -414,7 +427,7 @@ class Player():
 
     # Algorithms:
 
-    def random_cord_of_shot(self, opponent):
+    def shooting_algorithm_1(self, opponent):
         """ Return random index [row, column] ---  Level: easy"""
         self.shot_row = randint(0, 9)
         self.shot_kolumn = randint(0, 9)
@@ -423,9 +436,9 @@ class Player():
             return [self.shot_row, self.shot_kolumn]
 
         else:
-            return  self.random_cord_of_shot(opponent)
+            return self.shooting_algorithm_1(opponent)
 
-    def shooting_algorithm_1(self, ships_opponent):
+    def shooting_algorithm_2(self, ships_opponent):
         """
         Return index [row, column] ---  Level: intermediate
         self.sheet_opponent - opponent's sheet with hide ships
@@ -481,6 +494,275 @@ class Player():
             self.a_index = randint(0, len(self.a_empty_fields[0]) - 1)
             self.a_row = self.a_empty_fields[0][self.a_index]
             self.a_kolumn = self.a_empty_fields[1][self.a_index]
+
+        elif len(self.a_hit_fields[0]) == 1:    # If there is one hit you need to check the number of free fields in two directions
+            for i in range(1, 4):  # Check 3 fields
+                try:  # Right
+                    if self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] + i] == empty:  # If the field is empty add to the adjacent fields
+                        self.a_neighboring_fields_horizontal[0].append(self.a_hit_fields[0][0])
+                        self.a_neighboring_fields_horizontal[1].append(self.a_hit_fields[1][0] + i)
+                        self.a_counter_fields_plus_h += 1
+                    else: break
+                except: break
+
+            for i in range(1, 4):  # Check 3 fields
+                try:  # Left
+                    if self.a_hit_fields[1][0] - i == -1: break
+                    elif self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] - i] == empty:  # If the field is empty add to the adjacent fields
+                        self.a_neighboring_fields_horizontal[0].append(self.a_hit_fields[0][0])
+                        self.a_neighboring_fields_horizontal[1].append(self.a_hit_fields[1][0] - i)
+                        self.a_counter_fields_minus_h += 1
+                    else: break
+                except: break
+
+            for i in range(1, 4):  # Check 3 fields
+                try:  # Down
+                    if self.sheet_opponent[self.a_hit_fields[0][0] + i][self.a_hit_fields[1][0]] == empty:  # If the field is empty add to the adjacent fields
+                        self.a_neighboring_fields_vertical[0].append(self.a_hit_fields[0][0] + i)
+                        self.a_neighboring_fields_vertical[1].append(self.a_hit_fields[1][0])
+                        self.a_counter_fields_plus_v += 1
+                    else: break
+                except: break
+
+            for i in range(1, 4):  # Check 3 fields
+                try:  # Up
+                    if self.a_hit_fields[0][0] - i == -1: break
+                    elif self.sheet_opponent[self.a_hit_fields[0][0] - i][self.a_hit_fields[1][0]] == empty:  # If the field is empty add to the adjacent fields
+                        self.a_neighboring_fields_vertical[0].append(self.a_hit_fields[0][0] - i)
+                        self.a_neighboring_fields_vertical[1].append(self.a_hit_fields[1][0])
+                        self.a_counter_fields_minus_v += 1
+                    else: break
+                except: break
+
+
+            if len(self.a_neighboring_fields_horizontal[0]) > len(self.a_neighboring_fields_vertical[0]):       # If more free fields horizontally
+                if self.a_counter_fields_minus_h > self.a_counter_fields_plus_h:                                # If more free fields in left
+                    if self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] - 1] == empty:      # Shoot to the left (index -) if is 'empty'
+                        self.a_row = self.a_hit_fields[0][0]
+                        self.a_kolumn = self.a_hit_fields[1][0] - 1
+                    else:                                                   # Shoot to the right (index +)
+                        self.a_row = self.a_hit_fields[0][-1]
+                        self.a_kolumn = self.a_hit_fields[1][-1] + 1
+
+                elif self.a_counter_fields_minus_h <= self.a_counter_fields_plus_h:                             # If more free fields in right or =
+                    if self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] + 1] == empty:      # Shoot to the right (index +) if is 'empty'
+                        self.a_row = self.a_hit_fields[0][-1]
+                        self.a_kolumn = self.a_hit_fields[1][-1] + 1
+                    else:                                                   # Shoot to the left (index -)
+                        self.a_row = self.a_hit_fields[0][0]
+                        self.a_kolumn = self.a_hit_fields[1][0] - 1
+
+            elif len(self.a_neighboring_fields_horizontal[0]) <= len(self.a_neighboring_fields_vertical[0]):    # If more free fields vertically or =
+                if self.a_counter_fields_minus_v > self.a_counter_fields_plus_v:                                # If more free fields in up
+                    if self.sheet_opponent[self.a_hit_fields[0][0] - 1][self.a_hit_fields[1][0]] == empty:      # # Shoot to the up (index -)
+                        self.a_row = self.a_hit_fields[0][0] - 1
+                        self.a_kolumn = self.a_hit_fields[1][0]
+                    else:                                                   # Shoot to the down (index +)
+                        self.a_row = self.a_hit_fields[0][-1] + 1
+                        self.a_kolumn = self.a_hit_fields[1][-1]
+
+
+                elif self.a_counter_fields_minus_v <= self.a_counter_fields_plus_v:                             # If more free fields in down or =
+                    if self.sheet_opponent[self.a_hit_fields[0][0] + 1][self.a_hit_fields[1][0]] == empty:      # Shoot to the down (index +)
+                        self.a_row = self.a_hit_fields[0][-1] + 1
+                        self.a_kolumn = self.a_hit_fields[1][-1]
+                    else:                                                   # Shoot to the up (index -)
+                        self.a_row = self.a_hit_fields[0][0] - 1
+                        self.a_kolumn = self.a_hit_fields[1][0]
+
+        elif len(self.a_hit_fields[0]) > 1:                             # If there is minimum 2 hit you need to check the number of free fields in two directions
+            if self.a_hit_fields[0][0] == self.a_hit_fields[0][1]:          # The ship is horizontal. Index of the row is known.
+                self.a_row = self.a_hit_fields[0][0]
+                for i in range(1, 3):   # Checking 2 fields to right
+                    try:
+                        if self.sheet_opponent[self.a_hit_fields[0][-1]][self.a_hit_fields[1][-1] + i] == empty:  # If the field is empty add to the adjacent fields
+                            self.a_neighboring_fields_horizontal[0].append(self.a_hit_fields[0][-1])
+                            self.a_neighboring_fields_horizontal[1].append(self.a_hit_fields[1][-1] + i)
+                            self.a_counter_fields_plus_h += 1           # Increase the counter of free fields to the right (index kolumn +)
+                        else:
+                            break
+                    except: break
+                for i in range(1, 3):  # Checking 2 fields to left
+                    try:
+                        if self.a_hit_fields[1][0] == 0: break
+                        elif self.sheet_opponent[self.a_hit_fields[0][0]][self.a_hit_fields[1][0] - i] == empty:  # If the field is empty add to the adjacent fields
+                            self.a_neighboring_fields_horizontal[0].append(self.a_hit_fields[0][0])
+                            self.a_neighboring_fields_horizontal[1].append(self.a_hit_fields[1][0] - i)
+                            self.a_counter_fields_minus_h += 1          # Increase the counter of free fields to the left (index kolumn -)
+                        else:
+                            break
+                    except: break
+
+                if self.a_counter_fields_minus_h > self.a_counter_fields_plus_h:    # If more free fields to the left then we shoot to the left
+                    self.a_kolumn = self.a_hit_fields[1][0] - 1
+                elif self.a_counter_fields_minus_h <= self.a_counter_fields_plus_h: # If more free fields to the right or the same amount, we shoot to the right
+                    self.a_kolumn = self.a_hit_fields[1][-1] + 1
+
+
+            elif self.a_hit_fields[1][0] == self.a_hit_fields[1][1]:        # The ship is vertical. Index of the kolumn is known.
+                self.a_kolumn = self.a_hit_fields[1][0]
+
+                for i in range(1, 3):  # Checking 2 fields to down
+                    try:
+                        if self.sheet_opponent[self.a_hit_fields[0][-1] + i][self.a_hit_fields[1][-1]] == empty:    # If the field is empty add to the adjacent fields
+                            self.a_neighboring_fields_vertical[0].append(self.a_hit_fields[0][-1] + i)
+                            self.a_neighboring_fields_vertical[1].append(self.a_hit_fields[1][-1])
+                            self.a_counter_fields_plus_v += 1  # Increase the counter of free fields to the down (index row +)
+                        else:
+                            break
+                    except: break
+                for i in range(1, 3):  # Checking 2 fields to up
+                    try:
+                        if self.sheet_opponent[self.a_hit_fields[0][0] - i][self.a_hit_fields[1][0]] == empty:      # If the field is empty add to the adjacent fields
+                            self.a_neighboring_fields_vertical[0].append(self.a_hit_fields[0][0] - i)
+                            self.a_neighboring_fields_vertical[1].append(self.a_hit_fields[1][0])
+                            self.a_counter_fields_minus_v += 1  # Increase the counter of free fields to the up (index kolumn -)
+                        else:
+                            break
+                    except: break
+
+                if self.a_counter_fields_minus_v > self.a_counter_fields_plus_v:        # If more free fields to the up then we shoot to the up
+                    self.a_row = self.a_hit_fields[0][0] - 1
+                elif self.a_counter_fields_minus_v <= self.a_counter_fields_plus_v:     # If more free fields to the down or the same amount, we shoot to the down
+                    self.a_row = self.a_hit_fields[0][-1] + 1
+
+
+        return [self.a_row, self.a_kolumn]
+
+    def shooting_algorithm_3(self, ships_opponent):
+        """
+        Return index [row, column] ---  Level: intermediate
+        self.sheet_opponent - opponent's sheet with hide ships
+        """
+
+        self.a_ships_opponent = ships_opponent
+        self.a_neighboring_fields_vertical = [[], []]
+        self.a_neighboring_fields_horizontal = [[], []]
+        self.a_hit_fields = [[], []]
+        self.a_empty_fields = [[], []]
+        self.a_counter_fields_plus_h = 0
+        self.a_counter_fields_minus_h = 0
+        self.a_counter_fields_plus_v = 0
+        self.a_counter_fields_minus_v = 0
+        self.dict_ships = {1: 0, 2: 0, 3: 0, 4: 0}
+        self.free_4 = [[], []]
+        self.free_3 = [[], []]
+        self.free_2 = [[], []]
+        self.free_1 = [[], []]
+
+        for r in range(10):
+            for k in range(10):
+                if self.sheet_opponent[r][k] == destroyed:            # If the field is hit, the adjacent field changes to 'close'
+                    if r < 9:
+                        if self.sheet_opponent[r + 1][k] == empty:
+                            self.sheet_opponent[r + 1][k] = close
+                    if r > 0:
+                        if self.sheet_opponent[r - 1][k] == empty:
+                            self.sheet_opponent[r - 1][k] = close
+                    if k < 9:
+                        if self.sheet_opponent[r][k + 1] == empty:
+                            self.sheet_opponent[r][k + 1] = close
+                    if k > 0:
+                        if self.sheet_opponent[r][k - 1] == empty:
+                            self.sheet_opponent[r][k - 1] = close
+
+                    if r < 9 and k < 9:
+                        self.sheet_opponent[r + 1][k + 1] = close
+                    if r < 9 and k > 0:
+                        self.sheet_opponent[r + 1][k - 1] = close
+                    if r > 0 and k < 9:
+                        self.sheet_opponent[r - 1][k + 1] = close
+                    if r > 0 and k > 0:
+                        self.sheet_opponent[r - 1][k - 1] = close
+
+        for r in range(10):         # Searching for a hit
+            for k in range(10):
+                if self.sheet_opponent[r][k] == hit:                    # If field = hit, add field to hit list
+                    self.a_hit_fields[0].append(r)
+                    self.a_hit_fields[1].append(k)
+                elif self.sheet_opponent[r][k] == empty:                # If field = empty, add field to empty list
+                    self.a_empty_fields[0].append(r)
+                    self.a_empty_fields[1].append(k)
+
+
+        if len(self.a_hit_fields[0]) == 0:                              # If there is no hit in the sheet
+            '''for ship in self.a_ships_opponent:
+                if ship.actual_length == 1:
+                    self.dict_ships[1] += 1
+                elif ship.actual_length == 2:
+                    self.dict_ships[2] += 1
+                elif ship.actual_length == 3:
+                    self.dict_ships[3] += 1
+                elif ship.actual_length == 4:
+                    self.dict_ships[4] += 1
+            #print(f'Ships: {self.dict_ships}')'''
+            print(self.a_empty_fields)
+            for i in range(len(self.a_empty_fields[0])):
+                try:
+                    if self.sheet_opponent[self.a_empty_fields[0][i] + 1][self.a_empty_fields[1][i]] == empty:
+                        self.a_counter_fields_plus_v += 1
+                except: pass
+                try:
+                    if self.sheet_opponent[self.a_empty_fields[0][i] - 1][self.a_empty_fields[1][i]] == empty:
+                        self.a_counter_fields_minus_v += 1
+                except: pass
+                try:
+                    if self.sheet_opponent[self.a_empty_fields[0][i]][self.a_empty_fields[1][i] + 1] == empty:
+                        self.a_counter_fields_plus_h += 1
+                except: pass
+                try:
+                    if self.sheet_opponent[self.a_empty_fields[0][i]][self.a_empty_fields[1][i] - 1] == empty:
+                        self.a_counter_fields_minus_h += 1
+                except: pass
+
+                if self.a_counter_fields_plus_v + self.a_counter_fields_minus_v + self.a_counter_fields_plus_h + self.a_counter_fields_minus_h == 4:
+                    self.free_4[0].append(self.a_empty_fields[0][i])
+                    self.free_4[1].append(self.a_empty_fields[1][i])
+                    print(f'Dodaje do free_4: {self.a_empty_fields[0][i]}, {self.a_empty_fields[1][i]}')
+                elif self.a_counter_fields_plus_v + self.a_counter_fields_minus_v + self.a_counter_fields_plus_h + self.a_counter_fields_minus_h == 3:
+                    self.free_3[0].append(self.a_empty_fields[0][i])
+                    self.free_3[1].append(self.a_empty_fields[1][i])
+                    print(f'Dodaje do free_3: {self.a_empty_fields[0][i]}, {self.a_empty_fields[1][i]}')
+                elif self.a_counter_fields_plus_v + self.a_counter_fields_minus_v + self.a_counter_fields_plus_h + self.a_counter_fields_minus_h == 2:
+                    self.free_2[0].append(self.a_empty_fields[0][i])
+                    self.free_2[1].append(self.a_empty_fields[1][i])
+                    print(f'Dodaje do free_2: {self.a_empty_fields[0][i]}, {self.a_empty_fields[1][i]}')
+                elif self.a_counter_fields_plus_v + self.a_counter_fields_minus_v + self.a_counter_fields_plus_h + self.a_counter_fields_minus_h == 1:
+                    self.free_1[0].append(self.a_empty_fields[0][i])
+                    self.free_1[1].append(self.a_empty_fields[1][i])
+                    print(f'Dodaje do free_1: {self.a_empty_fields[0][i]}, {self.a_empty_fields[1][i]}')
+
+            if len(self.free_4[0]) > 0:
+                i = randint(0, len(self.free_4[0]) - 1)
+                self.a_row = self.free_4[0][i]
+                self.a_kolumn = self.free_4[1][i]
+                print(f'W 4: {self.free_4}')
+
+            elif len(self.free_3[0]) > 0:
+                i = randint(0, len(self.free_3[0]) - 1)
+                self.a_row = self.free_3[0][i]
+                self.a_kolumn = self.free_3[1][i]
+                print(f'W 3: {self.free_3}')
+
+            elif len(self.free_2[0]) > 0:
+                i = randint(0, len(self.free_2[0]) - 1)
+                self.a_row = self.free_2[0][i]
+                self.a_kolumn = self.free_2[1][i]
+                print(f'W 2: {self.free_2}')
+
+            elif len(self.free_1[0]) > 0:
+                i = randint(0, len(self.free_1[0]) - 1)
+                self.a_row = self.free_1[0][i]
+                self.a_kolumn = self.free_1[1][i]
+                print(f'W 1: {self.free_1}')
+
+            else:
+                i = randint(0, len(self.a_empty_fields[0]) - 1)
+                self.a_row = self.a_empty_fields[0][i]
+                self.a_kolumn = self.a_empty_fields[1][i]
+                print(f'0')
+
+            return [self.a_row, self.a_kolumn]
 
         elif len(self.a_hit_fields[0]) == 1:    # If there is one hit you need to check the number of free fields in two directions
             for i in range(1, 4):  # Check 3 fields
@@ -622,7 +904,6 @@ class Player():
 
         return [self.a_row, self.a_kolumn]
 
-
 class Ship():
     def __init__(self, fields_of_ship):
         self.fields = [[], []]
@@ -639,7 +920,6 @@ class Ship():
         
         self.front_field = [self.fields[0][0], self.fields[1][0]]   # First field of the ship
 
-        
         
 
 # Field marks
