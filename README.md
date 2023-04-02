@@ -23,18 +23,18 @@ It is recommended to run the program in an IDE such as PyCharm. In the default c
 ### Course of the game
 * <b>Opponent level:</b> Currently are 2 levels. The third level is not yet finished.<br />
 `1` - easy<br />
-`2` - medium<br />
+`2` - medium<br /><br />
 * <b>Kind of ship deployment:</b> `Y` - manually, `N` - automatically.<br />
 When you select automatically method, algorithm set ships for you.<br />
 ![start_automatically](start_automatically.png)<br /><br />
 When you select manually method, you must set all ships on sheet. Give coordinates first field of ship e.g. `10C`<br />
 Next give direction: `v`ertical or `h`orizontal<br />
 ![start_manually](start_manually.png)<br /><br />
-When you have ships deployed. You can start the game.<br />
+* When you have ships deployed. You can start the game.<br />
 empty = `-`<br />
 hit = `X`<br />
 fail = `O`<br />
 destroyed = `#`<br />
 ![game](game.png)<br /><br />
-End game<br />
+* End game<br />
 ![end_game](end_game.png)<br />
